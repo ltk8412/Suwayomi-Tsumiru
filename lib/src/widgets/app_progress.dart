@@ -6,8 +6,6 @@
 
 import 'package:material_ui/material_ui.dart';
 
-import '../utils/motion/reduce_motion.dart';
-
 /// Indeterminate progress fraction shown while reduced motion / e-ink is on:
 /// a static partial ring reads as "busy" without animating (which forces a
 /// repaint on every frame — the worst case for e-ink panels).
@@ -16,8 +14,8 @@ const double kStaticCircularProgressFraction = 0.75;
 /// Static partial bar used for indeterminate progress under reduced motion.
 const double kStaticLinearProgressFraction = 0.6;
 
-/// [CircularProgressIndicator] that stops animating under reduced motion or
-/// E-Ink mode. Determinate values render unchanged.
+/// [CircularProgressIndicator] that never animates (the fork is always in
+/// reduced motion). Determinate values render unchanged.
 class AppCircularProgress extends StatelessWidget {
   const AppCircularProgress({
     super.key,
@@ -40,9 +38,8 @@ class AppCircularProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final animate = value == null && !context.reduceMotion;
     return CircularProgressIndicator(
-      value: animate ? null : (value ?? kStaticCircularProgressFraction),
+      value: value ?? kStaticCircularProgressFraction,
       backgroundColor: backgroundColor,
       color: color,
       strokeWidth: strokeWidth,
@@ -53,8 +50,8 @@ class AppCircularProgress extends StatelessWidget {
   }
 }
 
-/// [LinearProgressIndicator] that stops animating under reduced motion or
-/// E-Ink mode. Determinate values render unchanged.
+/// [LinearProgressIndicator] that never animates (the fork is always in
+/// reduced motion). Determinate values render unchanged.
 class AppLinearProgress extends StatelessWidget {
   const AppLinearProgress({
     super.key,
@@ -75,9 +72,8 @@ class AppLinearProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final animate = value == null && !context.reduceMotion;
     return LinearProgressIndicator(
-      value: animate ? null : (value ?? kStaticLinearProgressFraction),
+      value: value ?? kStaticLinearProgressFraction,
       backgroundColor: backgroundColor,
       color: color,
       minHeight: minHeight,

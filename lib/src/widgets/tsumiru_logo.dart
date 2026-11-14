@@ -6,6 +6,8 @@
 
 import 'package:material_ui/material_ui.dart';
 
+import '../constants/gen/assets.gen.dart';
+
 /// The single flat mark used across the e-ink fork.
 class TsumiruLogo extends StatelessWidget {
   const TsumiruLogo({super.key, required this.size});
@@ -14,6 +16,6 @@ class TsumiruLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Image.asset('assets/icons/logo_eink.png', width: size, height: size);
+    return Image.asset(Assets.icons.logoEink.path, width: size, height: size);
   }
 }

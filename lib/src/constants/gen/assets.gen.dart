@@ -16,6 +16,10 @@ class $AssetsIconsGen {
   AssetGenImage get darkIcon =>
       const AssetGenImage('assets/icons/dark_icon.png');
 
+  /// File path: assets/icons/logo_eink.png
+  AssetGenImage get logoEink =>
+      const AssetGenImage('assets/icons/logo_eink.png');
+
   /// File path: assets/icons/logo_foreground.png
   AssetGenImage get logoForeground =>
       const AssetGenImage('assets/icons/logo_foreground.png');
@@ -39,6 +43,7 @@ class $AssetsIconsGen {
   /// List of all assets
   List<AssetGenImage> get values => [
     darkIcon,
+    logoEink,
     logoForeground,
     logoOnLight,
     logoOnLightForeground,
