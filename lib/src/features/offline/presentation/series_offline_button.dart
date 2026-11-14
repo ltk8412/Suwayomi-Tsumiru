@@ -11,6 +11,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../../graphql/__generated__/schema.graphql.dart';
 import '../../../utils/extensions/custom_extensions.dart';
 import '../../../utils/motion/reduce_motion.dart';
+import '../../../widgets/app_progress.dart';
 import '../../../widgets/popup_widgets/confirm_action.dart';
 import '../../account/data/account_permission.dart';
 import '../../account/data/account_providers.dart';
@@ -41,7 +42,7 @@ class SeriesOfflineButton extends ConsumerWidget {
           ? const SizedBox(
               width: 20,
               height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
+              child: AppCircularProgress(strokeWidth: 2),
             )
           : Icon(
               onDevice

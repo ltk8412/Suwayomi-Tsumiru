@@ -33,6 +33,7 @@ import 'utils/launch_url_in_web.dart';
 import 'utils/misc/toast/toast.dart';
 import 'utils/motion/reduce_motion.dart';
 import 'utils/theme/app_theme_builder.dart';
+import 'widgets/app_progress.dart';
 import 'widgets/desktop/desktop_page_frame.dart';
 import 'widgets/desktop/desktop_window_scaffold.dart';
 import 'widgets/web_page_title.dart';
@@ -138,7 +139,7 @@ class TsumiruApp extends HookConsumerWidget {
                   ),
                   if (sessionChanging)
                     const Scaffold(
-                      body: Center(child: CircularProgressIndicator()),
+                      body: Center(child: AppCircularProgress()),
                     ),
                 ],
               ),
@@ -194,7 +195,7 @@ class AccountSessionLoading extends ConsumerWidget {
       ),
       child: const Directionality(
         textDirection: TextDirection.ltr,
-        child: Material(child: Center(child: CircularProgressIndicator())),
+        child: Material(child: Center(child: AppCircularProgress())),
       ),
     );
   }
@@ -306,4 +307,22 @@ class AppScrollBehavior extends MaterialScrollBehavior {
     PointerDeviceKind.invertedStylus,
     PointerDeviceKind.unknown,
   };
+
+  // E-ink and reduced motion: clamp instead of bouncing, and never paint the
+  // overscroll glow — both cause needless repaints on e-ink panels.
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) {
+    final physics = super.getScrollPhysics(context);
+    if (!MediaQuery.disableAnimationsOf(context)) return physics;
+    return const ClampingScrollPhysics().applyTo(physics);
+  }
+
+  @override
+  Widget buildOverscrollIndicator(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) => MediaQuery.disableAnimationsOf(context)
+      ? child
+      : super.buildOverscrollIndicator(context, child, details);
 }

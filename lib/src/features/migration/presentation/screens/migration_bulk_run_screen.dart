@@ -19,6 +19,7 @@ import '../../../../routes/router_config.dart';
 import '../../../../utils/extensions/custom_extensions.dart';
 import '../../../../utils/motion/reduce_motion.dart';
 import '../../../../utils/theme/brand.dart';
+import '../../../../widgets/app_progress.dart';
 import '../../../../widgets/desktop/desktop_top_bar.dart';
 import '../../../../widgets/desktop/desktop_window.dart';
 import '../../../../widgets/emoticons.dart';
@@ -281,7 +282,7 @@ class MigrationBulkRunBody extends HookConsumerWidget {
               ),
             )
           : r == null
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: AppCircularProgress())
           : AnimatedBuilder(
               animation: r,
               builder: (context, _) {
@@ -346,7 +347,7 @@ class MigrationBulkRunBody extends HookConsumerWidget {
                     ),
                     if (!_complete(r)) ...[
                       const SizedBox(height: 8),
-                      LinearProgressIndicator(
+                      AppLinearProgress(
                         value: r.entries.isEmpty
                             ? null
                             : _finished(r) / r.entries.length,
@@ -873,7 +874,7 @@ class _Row extends StatelessWidget {
               ),
               Expanded(
                 child: searching
-                    ? const Center(child: CircularProgressIndicator())
+                    ? const Center(child: AppCircularProgress())
                     : entry.toMangaId == null
                     ? Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1080,7 +1081,7 @@ class _ResultCard extends StatelessWidget {
       case BulkEntryPhase.searching:
         return const AspectRatio(
           aspectRatio: kMangaCoverAspectRatio,
-          child: Center(child: CircularProgressIndicator()),
+          child: Center(child: AppCircularProgress()),
         );
       case BulkEntryPhase.noMatch:
       case BulkEntryPhase.failed when entry.toMangaId == null:
@@ -1380,7 +1381,7 @@ class _MigrationProgressDialog extends StatelessWidget {
         return PopScope(
           canPop: finished,
           child: AlertDialog(
-            content: LinearProgressIndicator(value: value),
+            content: AppLinearProgress(value: value),
             actions: [
               TextButton(
                 onPressed: onCancel,

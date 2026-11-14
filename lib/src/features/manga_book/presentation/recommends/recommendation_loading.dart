@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../../../utils/extensions/custom_extensions.dart';
+import '../../../../widgets/app_progress.dart';
 
 class RecommendationLoading extends StatelessWidget {
   const RecommendationLoading({super.key});
@@ -10,7 +11,7 @@ class RecommendationLoading extends StatelessWidget {
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const CircularProgressIndicator(),
+        const AppCircularProgress(),
         const SizedBox(height: 8),
         Text(
           context.l10n.suggestionsFetching,

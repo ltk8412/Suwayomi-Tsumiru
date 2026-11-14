@@ -5,6 +5,7 @@ import '../../../../../../global_providers/global_providers.dart';
 import '../../../../../../graphql/__generated__/schema.graphql.dart';
 import '../../../../../../utils/extensions/custom_extensions.dart';
 import '../../../../../../utils/motion/reduce_motion.dart';
+import '../../../../../../widgets/app_progress.dart';
 import '../../../../../../widgets/compact_switch.dart';
 import '../../../../../../widgets/desktop/desktop_page_frame.dart';
 import '../../../../../../widgets/input_popup/domain/settings_prop_type.dart';
@@ -245,7 +246,7 @@ class _WebInterfaceSectionState extends ConsumerState<WebInterfaceSection> {
       children: [
         const DesktopPageLeadingGap(16),
         if (canManage && settings.isLoading && !settings.hasValue)
-          const ListTile(title: LinearProgressIndicator()),
+          const ListTile(title: AppLinearProgress()),
         if (canManage && settings.hasValue && data == null)
           ListTile(subtitle: Text(context.l10n.webInterfaceUnsupported)),
         if (!canManage)
@@ -466,7 +467,7 @@ class _WebInterfaceSectionState extends ConsumerState<WebInterfaceSection> {
                                         : null,
                                   ),
                                 if (downloading || _busy)
-                                  LinearProgressIndicator(
+                                  AppLinearProgress(
                                     value: downloading
                                         ? (_status?.progress ?? 0).clamp(
                                                 0,

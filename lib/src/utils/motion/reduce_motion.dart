@@ -8,6 +8,8 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../platform/eink/eink_mode_providers.dart';
+
 part 'reduce_motion.g.dart';
 
 /// App-requested reduced motion, in addition to the OS "Remove animations" flag.
@@ -45,7 +47,8 @@ class ReduceMotionScope extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final reduce =
         MediaQuery.disableAnimationsOf(context) ||
-        ref.watch(appReduceMotionProvider);
+        ref.watch(appReduceMotionProvider) ||
+        ref.watch(einkActiveProvider);
     final theme = Theme.of(context);
     return MediaQuery(
       data: MediaQuery.of(context).copyWith(disableAnimations: reduce),

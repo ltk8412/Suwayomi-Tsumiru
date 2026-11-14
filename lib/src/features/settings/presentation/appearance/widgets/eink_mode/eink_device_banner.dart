@@ -9,8 +9,8 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../../../../utils/extensions/custom_extensions.dart';
+import '../../../../../../utils/platform/eink/eink_mode_providers.dart';
 import '../../../../../../utils/platform/eink/eink_providers.dart';
-import 'eink_mode_tile.dart';
 import 'eink_settings_preset.dart';
 
 /// Suggests enabling E-Ink mode on detected e-ink hardware; dismissible.

@@ -11,6 +11,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../../../../../utils/extensions/custom_extensions.dart';
 import '../../../../../../../utils/motion/reduce_motion.dart';
+import '../../../../../../../widgets/app_progress.dart';
 import '../../../../../domain/chapter/chapter_model.dart';
 import '../../../../../domain/chapter/missing_chapters.dart';
 import '../../../../../domain/chapter_page/chapter_page_model.dart';
@@ -119,11 +120,9 @@ class InfinityContinuousFeedback {
             SizedBox(
               width: 18,
               height: 18,
-              child: CircularProgressIndicator(
+              child: AppCircularProgress(
                 strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  context.theme.colorScheme.onInverseSurface,
-                ),
+                color: context.theme.colorScheme.onInverseSurface,
               ),
             ),
             const Gap(12),
@@ -158,11 +157,9 @@ class InfinityContinuousFeedback {
             SizedBox(
               width: 18,
               height: 18,
-              child: CircularProgressIndicator(
+              child: AppCircularProgress(
                 strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  context.theme.colorScheme.onInverseSurface,
-                ),
+                color: context.theme.colorScheme.onInverseSurface,
               ),
             ),
             const Gap(12),

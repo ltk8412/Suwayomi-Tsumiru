@@ -11,6 +11,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../../../utils/extensions/custom_extensions.dart';
 import '../../../../../utils/motion/reduce_motion.dart';
+import '../../../../../widgets/app_progress.dart';
 import '../../../../../widgets/popup_widgets/confirm_action.dart';
 import '../../../../library/presentation/library/controller/library_manga_list.dart';
 import '../../../../migration/controller/bulk_migration_providers.dart';
@@ -148,7 +149,7 @@ class _SingleMigrationProgressDialog extends StatelessWidget {
         animation: runner,
         builder: (context, _) {
           final settled = _isSettled(runner, fromMangaId);
-          return LinearProgressIndicator(value: settled ? 1 : null);
+          return AppLinearProgress(value: settled ? 1 : null);
         },
       ),
       actions: [

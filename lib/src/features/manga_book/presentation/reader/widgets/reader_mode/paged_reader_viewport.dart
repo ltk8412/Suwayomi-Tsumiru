@@ -1010,6 +1010,12 @@ class _PagedReaderViewportState extends State<PagedReaderViewport>
     final travel = (target - zoom.offset).distance;
     if (travel < 1) return;
 
+    // E-ink and reduced motion snap instead of animating the pan settle.
+    if (context.reduceMotion) {
+      zoom.offset = target;
+      return;
+    }
+
     _panAnimation
       ..stop()
       ..duration = _panFlingDuration

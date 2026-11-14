@@ -21,6 +21,7 @@ import '../../../../utils/extensions/custom_extensions.dart';
 import '../../../../utils/misc/toast/toast.dart';
 import '../../../../utils/motion/reduce_motion.dart';
 import '../../../../utils/platform/web_auth_mode.dart';
+import '../../../../widgets/app_progress.dart';
 import '../../../../widgets/popup_widgets/confirm_action.dart';
 import '../../../../widgets/popup_widgets/radio_list_popup.dart';
 import '../../../account/data/account_actions.dart';
@@ -395,7 +396,7 @@ class InlineAuthSection extends HookConsumerWidget {
                           ? const SizedBox(
                               width: 18,
                               height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                              child: AppCircularProgress(strokeWidth: 2),
                             )
                           : const Icon(FluentIcons.wifi_1_24_regular),
                       label: Text(context.l10n.authTestConnection),
@@ -409,7 +410,7 @@ class InlineAuthSection extends HookConsumerWidget {
                           ? const SizedBox(
                               width: 18,
                               height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                              child: AppCircularProgress(strokeWidth: 2),
                             )
                           : const Icon(FluentIcons.arrow_enter_20_regular),
                       label: Text(context.l10n.onboardingSignIn),

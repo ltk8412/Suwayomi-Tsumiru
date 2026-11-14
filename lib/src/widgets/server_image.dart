@@ -30,6 +30,7 @@ import '../utils/hooks/debounced_hook.dart';
 import '../utils/misc/app_utils.dart';
 import '../utils/motion/reduce_motion.dart';
 import '../utils/texture_limit.dart';
+import 'app_progress.dart';
 import 'cover_cache/cover_cache.dart';
 import 'custom_circular_progress_indicator.dart';
 
@@ -644,7 +645,7 @@ class ServerImageWithCpi extends StatelessWidget {
           children: [
             const Padding(
               padding: EdgeInsets.all(4.0),
-              child: CircularProgressIndicator(strokeWidth: 2),
+              child: AppCircularProgress(strokeWidth: 2),
             ),
             ServerImage(
               imageUrl: url,

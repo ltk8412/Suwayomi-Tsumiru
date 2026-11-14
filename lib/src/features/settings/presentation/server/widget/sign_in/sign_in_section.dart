@@ -7,6 +7,7 @@ import '../../../../../../utils/extensions/custom_extensions.dart';
 import '../../../../../../utils/misc/toast/toast.dart';
 import '../../../../../../utils/motion/reduce_motion.dart';
 import '../../../../../../utils/platform/web_auth_mode.dart';
+import '../../../../../../widgets/app_progress.dart';
 import '../../../../../../widgets/desktop/desktop_page_frame.dart';
 import '../../../../../../widgets/input_popup/domain/settings_prop_type.dart';
 import '../../../../../../widgets/input_popup/settings_prop_tile.dart';
@@ -75,7 +76,7 @@ class _SignInSectionState extends ConsumerState<SignInSection> {
     }
 
     if (settings.isLoading || accountCapability.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: AppCircularProgress());
     }
     final capability = accountCapability.value;
     if (settings.hasError ||

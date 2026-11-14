@@ -12,6 +12,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../../routes/router_config.dart';
 import '../../../utils/extensions/custom_extensions.dart';
 import '../../../utils/motion/reduce_motion.dart';
+import '../../../widgets/app_progress.dart';
 import '../../account/data/account_session_storage.dart';
 import '../data/account_storage_recovery.dart';
 import '../data/account_storage_recovery_state.dart';
@@ -92,7 +93,7 @@ class AccountStorageRecoveryBanner extends ConsumerWidget {
                 ),
             ],
           ),
-          if (!failed) const LinearProgressIndicator(),
+          if (!failed) const AppLinearProgress(),
         ],
       ),
     );

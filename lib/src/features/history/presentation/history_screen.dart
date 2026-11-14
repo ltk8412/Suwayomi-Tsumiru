@@ -13,6 +13,7 @@ import '../../../constants/app_sizes.dart';
 import '../../../routes/router_config.dart';
 import '../../../utils/extensions/custom_extensions.dart';
 import '../../../utils/motion/reduce_motion.dart';
+import '../../../widgets/app_progress.dart';
 import '../../../widgets/desktop/desktop_page_frame.dart';
 import '../../../widgets/desktop/desktop_top_bar.dart';
 import '../../../widgets/emoticons.dart';
@@ -243,7 +244,7 @@ class HistoryScreen extends HookConsumerWidget {
                 );
                 return desktop ? DesktopCentredColumn(child: list) : list;
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const Center(child: AppCircularProgress()),
               error: (error, stack) => HistoryErrorState(
                 error: error,
                 onRetry: () =>

@@ -10,6 +10,7 @@ import '../../../../graphql/__generated__/schema.graphql.dart';
 import '../../../../utils/extensions/custom_extensions.dart';
 import '../../../../utils/misc/app_utils.dart';
 import '../../../../utils/misc/toast/toast.dart';
+import '../../../../widgets/app_progress.dart';
 import '../../../../widgets/popup_widgets/confirm_action.dart';
 import 'data/graphql/__generated__/query.graphql.dart';
 import 'data/syncyomi_settings_provider.dart';
@@ -202,7 +203,7 @@ class _SyncYomiSyncAction extends HookConsumerWidget {
         tooltip: syncYomiStepName(context, sync.step),
         icon: SizedBox.square(
           dimension: IconTheme.of(context).size ?? 24,
-          child: const CircularProgressIndicator(strokeWidth: 2),
+          child: const AppCircularProgress(strokeWidth: 2),
         ),
         onPressed: null,
       );

@@ -13,6 +13,7 @@ import '../../../../../constants/app_sizes.dart';
 import '../../../../../utils/extensions/custom_extensions.dart';
 import '../../../../../utils/hooks/debounced_hook.dart';
 import '../../../../../utils/misc/toast/toast.dart';
+import '../../../../../widgets/app_progress.dart';
 import '../../../../../widgets/search_field.dart';
 import '../../../controller/manga_track_records_controller.dart';
 import '../../../controller/tracker_search_controller.dart';
@@ -140,7 +141,7 @@ class TrackerSearch extends HookConsumerWidget {
                 ? const Center(
                     child: Padding(
                       padding: EdgeInsets.all(24),
-                      child: CircularProgressIndicator(),
+                      child: AppCircularProgress(),
                     ),
                   )
                 : resultsAsync!.showUiWhenData(context, (results) {

@@ -11,6 +11,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../../../utils/extensions/custom_extensions.dart';
+import '../../../../../widgets/app_progress.dart';
 import '../data/koreader_sync_repository.dart';
 import '../domain/koreader_sync_domain.dart';
 
@@ -119,7 +120,7 @@ class KoreaderSyncDialog extends HookConsumerWidget {
                 ? const SizedBox(
                     width: 16,
                     height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: AppCircularProgress(strokeWidth: 2),
                   )
                 : Text(l10n.koreaderSyncDisconnect),
           ),
@@ -208,7 +209,7 @@ class KoreaderSyncDialog extends HookConsumerWidget {
               ? const SizedBox(
                   width: 16,
                   height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: AppCircularProgress(strokeWidth: 2),
                 )
               : Text(l10n.koreaderSyncConnect),
         ),

@@ -24,6 +24,7 @@ import '../../../utils/motion/reduce_motion.dart';
 import '../../../utils/network/graphql_errors.dart';
 import '../../../utils/platform/web_auth_mode.dart';
 import '../../../utils/theme/brand.dart';
+import '../../../widgets/app_progress.dart';
 import '../../account/data/account_actions.dart';
 import '../../account/data/account_providers.dart';
 import '../../account/data/server_account_capability.dart';
@@ -227,7 +228,7 @@ class _NavBar extends StatelessWidget {
                   const SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: AppCircularProgress(strokeWidth: 2),
                   ),
                   const SizedBox(width: 12),
                   Flexible(
@@ -1145,7 +1146,7 @@ class _ServerStep extends HookConsumerWidget {
                   ? const SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: AppCircularProgress(strokeWidth: 2),
                     )
                   : const Icon(FluentIcons.search_24_regular, size: 18),
               label: Text(
@@ -1169,7 +1170,7 @@ class _ServerStep extends HookConsumerWidget {
               ? SizedBox(
                   width: 18,
                   height: 18,
-                  child: CircularProgressIndicator(
+                  child: AppCircularProgress(
                     strokeWidth: 2,
                     color: cs.onPrimary,
                   ),
@@ -1320,7 +1321,7 @@ class _ServerStep extends HookConsumerWidget {
                 ? SizedBox(
                     width: 18,
                     height: 18,
-                    child: CircularProgressIndicator(
+                    child: AppCircularProgress(
                       strokeWidth: 2,
                       color: cs.onPrimary,
                     ),

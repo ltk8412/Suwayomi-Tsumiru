@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../../graphql/__generated__/schema.graphql.dart';
 import '../../../utils/extensions/custom_extensions.dart';
 import '../../../utils/network/graphql_errors.dart';
+import '../../../widgets/app_progress.dart';
 import '../../../widgets/popup_widgets/confirm_action.dart';
 import '../data/account_administration.dart';
 import '../data/account_providers.dart';
@@ -282,7 +283,7 @@ class AccountAdminForm extends HookConsumerWidget {
                             color: Theme.of(context).colorScheme.error,
                           ),
                         ),
-                      if (busy.value) const LinearProgressIndicator(),
+                      if (busy.value) const AppLinearProgress(),
                     ],
                   ),
                 ),

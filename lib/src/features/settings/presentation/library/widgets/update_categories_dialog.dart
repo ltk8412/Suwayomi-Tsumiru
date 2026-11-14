@@ -10,6 +10,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../../../graphql/__generated__/schema.graphql.dart';
 import '../../../../../utils/extensions/custom_extensions.dart';
+import '../../../../../widgets/app_progress.dart';
 import '../../../../../widgets/popup_widgets/pop_button.dart';
 import '../../../../library/domain/category/category_model.dart';
 import '../../../../library/presentation/category/controller/edit_category_controller.dart';
@@ -50,7 +51,7 @@ class UpdateCategoriesDialog extends ConsumerWidget {
     return categories.when(
       loading: () => const AlertDialog(
         content: SizedBox(
-            height: 80, child: Center(child: CircularProgressIndicator())),
+            height: 80, child: Center(child: AppCircularProgress())),
       ),
       error: (_, _) => AlertDialog(
         title: Text(context.l10n.updateCategories),

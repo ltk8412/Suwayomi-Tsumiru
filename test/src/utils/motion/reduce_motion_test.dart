@@ -2,6 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:hooks_riverpod/misc.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tsumiru/src/global_providers/global_providers.dart';
 import 'package:tsumiru/src/routes/router_config.dart';
 import 'package:tsumiru/src/utils/motion/reduce_motion.dart';
 
@@ -20,7 +22,11 @@ class _Probe {
 
 Widget _app(_Probe probe, {List<Override> overrides = const []}) {
   return ProviderScope(
-    overrides: overrides,
+    overrides: [
+      // E-ink mode's providers read shared prefs inside ReduceMotionScope.
+      sharedPreferencesProvider.overrideWithValue(_prefs),
+      ...overrides,
+    ],
     child: MaterialApp(
       builder: (context, child) => ReduceMotionScope(child: child!),
       home: Builder(
@@ -90,7 +96,14 @@ Future<void> _expectPageAppearsInstantly(WidgetTester tester) async {
   expect(tester.getTopLeft(find.byKey(_nextKey)), Offset.zero);
 }
 
+late SharedPreferences _prefs;
+
 void main() {
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({});
+    _prefs = await SharedPreferences.getInstance();
+  });
+
   testWidgets('OS and app flags turn motion off, at runtime and on routes', (
     tester,
   ) async {

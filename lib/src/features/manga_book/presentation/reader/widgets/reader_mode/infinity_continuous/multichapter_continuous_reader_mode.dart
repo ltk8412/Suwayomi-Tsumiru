@@ -25,6 +25,7 @@ import '../../../../../../../utils/misc/toast/toast.dart';
 import '../../../../../../../utils/motion/reduce_motion.dart';
 import '../../../../../../../utils/platform/platform_runtime.dart';
 import '../../../../../../../utils/texture_limit.dart';
+import '../../../../../../../widgets/app_progress.dart';
 import '../../../../../../../widgets/server_image.dart';
 import '../../../../../../../widgets/zoom/scroll_offset_to_scroll_controller.dart';
 import '../../../../../../history/presentation/history_controller.dart';
@@ -1277,7 +1278,7 @@ class MultiChapterContinuousReaderMode extends HookConsumerWidget {
       Widget loadingPlaceholder([double? progress]) {
         return placeholderBox(
           child: Center(
-            child: CircularProgressIndicator(
+            child: AppCircularProgress(
               value: progress,
               color: spinnerColor,
             ),

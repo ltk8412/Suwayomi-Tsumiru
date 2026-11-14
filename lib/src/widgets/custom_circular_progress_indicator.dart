@@ -12,6 +12,7 @@ import 'package:shimmer/shimmer.dart';
 import '../constants/gen/assets.gen.dart';
 import '../utils/extensions/custom_extensions.dart';
 import '../utils/motion/reduce_motion.dart';
+import 'app_progress.dart';
 
 class CenterTsumiruShimmerIndicator extends StatelessWidget {
   const CenterTsumiruShimmerIndicator({super.key, this.value});
@@ -133,7 +134,7 @@ class MiniCircularProgressIndicator extends StatelessWidget {
         padding: padding ?? EdgeInsets.zero,
         child: SizedBox.square(
           dimension: size ?? resolveIconButtonIconSize(context),
-          child: CircularProgressIndicator(
+          child: AppCircularProgress(
             strokeWidth: 3,
             color: color,
             value: value,

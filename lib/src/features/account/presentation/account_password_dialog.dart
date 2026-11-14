@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../utils/extensions/custom_extensions.dart';
 import '../../../utils/network/graphql_errors.dart';
+import '../../../widgets/app_progress.dart';
 import '../data/account_actions.dart';
 
 class AccountPasswordDialog extends HookWidget {
@@ -127,7 +128,7 @@ class AccountPasswordDialog extends HookWidget {
                   error.value!,
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
-              if (busy.value) const LinearProgressIndicator(),
+              if (busy.value) const AppLinearProgress(),
             ],
           ),
         ),
