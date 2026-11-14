@@ -66,6 +66,7 @@ class AboutRepository {
       .getData((a) => a.checkForServerUpdates.map((e) => e.toDto).toList());
 
   Future<AsyncValue<Version?>> checkUpdate() async {
+    if (!appUpdateChecksEnabled) return const AsyncData(null);
     if (isGooglePlayBuild) return const AsyncData(null);
     if (await isServerHosted?.call() ?? false) return const AsyncData(null);
     final gitResponse = await AsyncValue.guard<Map<String, dynamic>?>(
