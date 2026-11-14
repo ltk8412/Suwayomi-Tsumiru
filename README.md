@@ -8,7 +8,8 @@
 
 <h1 align="center">Tsumiru-Eink</h1>
 
-> **⚠️ Dedicated e-ink fork.** Tsumiru-Eink is a fork of Tsumiru, optimized
+> **⚠️ Dedicated e-ink fork.** Tsumiru-Eink is a fork of
+> [Tsumiru](https://github.com/Suwayomi/Suwayomi-Tsumiru), optimized
 > for e-ink readers (Meebook M103, Onyx Boox, Hisense, Bigme, …): a monochrome
 > paper-white theme, no animations / transparency / shadows, paged reading, and
 > native EPD full refresh on supported devices.
@@ -19,7 +20,7 @@
 
 ## About
 
-Tsumiru is a client for Suwayomi-Server, so you'll need a server running first. Your library and reading progress are stored on the server, and Tsumiru reads them on Android, iOS, Linux, Windows, macOS or the web.
+Tsumiru is a client for [Suwayomi-Server](https://github.com/Suwayomi/Suwayomi-Server), so [you'll need a server running first](https://github.com/Suwayomi/Suwayomi-Server#downloading-and-running-the-app). Your library and reading progress are stored on the server, and Tsumiru reads them on Android, iOS, Linux, Windows, macOS or the web.
 
 ## Features
 
@@ -33,7 +34,7 @@ Tsumiru is a client for Suwayomi-Server, so you'll need a server running first. 
 
 ## Translations
 
-Tsumiru is translated on Hosted Weblate. Pick your language there to fix or add translations.
+Tsumiru is translated on [Hosted Weblate](https://hosted.weblate.org/projects/suwayomi/suwayomi-tsumiru/). Pick your language there to fix or add translations.
 
 ## Contributing
 
@@ -41,8 +42,8 @@ Pull requests are welcome. For larger changes, open an issue first so we can tal
 
 ## Related projects
 
-- Suwayomi-Server: the server Tsumiru connects to. It runs the sources and extensions and stores your library.
-- Suwayomi-Server-docker: the official Docker image, the quickest way to run the server on a home server or NAS.
+- [Suwayomi-Server](https://github.com/Suwayomi/Suwayomi-Server): the server Tsumiru connects to. It runs the sources and extensions and stores your library.
+- [Suwayomi-Server-docker](https://github.com/Suwayomi/Suwayomi-Server-docker): the official Docker image, the quickest way to run the server on a home server or NAS.
 
 ## Contributors
 
@@ -54,8 +55,8 @@ Tsumiru hosts no content and has no affiliation with any content provider. It sh
 
 ## Credits and license
 
-Tsumiru started as a fork of Tachidesk-Sorayomi and depends on Suwayomi-Server. Thanks to everyone who built and maintains both.
+Tsumiru started as a fork of [Tachidesk-Sorayomi](https://github.com/Suwayomi/Tachidesk-Sorayomi) and depends on [Suwayomi-Server](https://github.com/Suwayomi/Suwayomi-Server). Thanks to everyone who built and maintains both.
 
-The app typeface is Inter by Rasmus Andersson, bundled (Regular, Medium, SemiBold) under the SIL Open Font License 1.1. See [assets/fonts/inter/OFL.txt](assets/fonts/inter/OFL.txt). It is also registered with the app's licence list at startup, like the Font Awesome licence.
+The app typeface is [Inter](https://github.com/rsms/inter) by Rasmus Andersson, bundled (Regular, Medium, SemiBold) under the SIL Open Font License 1.1. See [assets/fonts/inter/OFL.txt](assets/fonts/inter/OFL.txt). It is also registered with the app's licence list at startup, like the Font Awesome licence.
 
 Licensed under the [Mozilla Public License 2.0](LICENSE). Source files keep their MPL-2.0 headers.
