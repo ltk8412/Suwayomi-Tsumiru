@@ -94,9 +94,9 @@ void main() {
     expect(dx('Gray'), lessThan(dx('White')));
     expect(dx('White'), lessThan(dx('Auto')));
 
-    // Default black.
-    final blackChip = find.widgetWithText(FilterChip, 'Black');
-    expect(tester.widget<FilterChip>(blackChip).selected, isTrue);
+    // Default white (e-ink).
+    final whiteChip = find.widgetWithText(FilterChip, 'White');
+    expect(tester.widget<FilterChip>(whiteChip).selected, isTrue);
 
     await tester.tap(find.text('Gray'));
     await tester.pumpAndSettle();

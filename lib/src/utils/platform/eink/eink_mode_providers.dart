@@ -8,29 +8,15 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../constants/db_keys.dart';
-import '../../extensions/custom_extensions.dart';
 import '../../mixin/shared_preferences_client_mixin.dart';
 import 'epd_refresh.dart';
 
 part 'eink_mode_providers.g.dart';
 
-@riverpod
-class EinkMode extends _$EinkMode with SharedPreferenceClientMixin<bool> {
-  @override
-  bool? build() => initialize(DBKeys.einkMode);
-}
-
-@riverpod
-class EinkSuggestionDismissed extends _$EinkSuggestionDismissed
-    with SharedPreferenceClientMixin<bool> {
-  @override
-  bool? build() => initialize(DBKeys.einkSuggestionDismissed);
-}
-
 /// Whether the native EPD refresh probe succeeded; persisted after the first
 /// successful probe so launches never re-probe. Failures are not persisted —
-/// the probe retries on the next E-Ink mode toggle, so firmware updates that
-/// add the API self-heal. Null until probed.
+/// the probe retries on the next launch, so firmware updates that add the API
+/// self-heal. Null until probed.
 @riverpod
 class NativeRefreshAvailable extends _$NativeRefreshAvailable
     with SharedPreferenceClientMixin<bool> {
@@ -47,13 +33,11 @@ Future<bool> ensureNativeRefreshProbed(ProviderContainer container) async {
   if (available) {
     container.read(nativeRefreshAvailableProvider.notifier).update(true);
   } else {
-    // Leave the key unset so the next E-Ink mode toggle probes again.
+    // Leave the key unset so the next launch probes again.
     container.read(nativeRefreshAvailableProvider.notifier).update(null);
   }
   return available;
 }
 
-/// The single switch: on applies the preset; off leaves applied values in place.
-final einkActiveProvider = Provider<bool>(
-  (ref) => ref.watch(einkModeProvider).ifNull(false),
-);
+/// The fork is always in e-ink mode.
+final einkActiveProvider = Provider<bool>((_) => true);

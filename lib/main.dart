@@ -56,8 +56,7 @@ import 'src/features/settings/presentation/server/widget/credential_popup/creden
 import 'src/features/settings/presentation/server/widget/credential_popup/login_credentials_popup.dart';
 import 'src/features/tracking/data/tracker_oauth.dart';
 import 'src/features/tracking/data/tracker_oauth_browser_stub.dart'
-    if (dart.library.js_interop)
-        'src/features/tracking/data/tracker_oauth_browser_web.dart';
+    if (dart.library.js_interop) 'src/features/tracking/data/tracker_oauth_browser_web.dart';
 import 'src/global_providers/global_providers.dart';
 import 'src/routes/router_config.dart';
 import 'src/tsumiru_app.dart';
@@ -70,6 +69,7 @@ import 'src/utils/extensions/custom_extensions.dart';
 import 'src/utils/hive/graphql_cache_guard.dart';
 import 'src/utils/misc/toast/toast.dart';
 import 'src/utils/network/graphql_errors.dart';
+import 'src/utils/platform/eink/eink_mode_providers.dart';
 import 'src/utils/platform/is_flatpak.dart';
 import 'src/utils/soft_clear_image_cache.dart';
 import 'src/widgets/app_error_app.dart';
@@ -183,6 +183,14 @@ Future<void> _startApp() async {
     await seedFirstRunPreferences(sharedPreferences);
   } catch (e, st) {
     debugPrint('onboarding migration failed: $e\n$st');
+  }
+
+  // Probe native EPD refresh once (persisted); the reader falls back to the
+  // flash overlay on devices without it.
+  try {
+    await ensureNativeRefreshProbed(container);
+  } catch (e, st) {
+    debugPrint('e-ink native refresh probe failed: $e\n$st');
   }
 
   // Preserve the remote URL before the LAN resolver can replace serverUrl.
@@ -466,11 +474,15 @@ void _onFatalError(Object error, StackTrace stack) {
 void _setupDeepLinkListener(ProviderContainer Function() currentContainer) {
   Future<void> handleUri(Uri uri) async {
     final container = currentContainer();
-    final current = container.read(authCredentialsStoreProvider.notifier).captureSession();
+    final current = container
+        .read(authCredentialsStoreProvider.notifier)
+        .captureSession();
     if (!current()) return;
     try {
       final toast = container.read(toastProvider);
-      final outcome = await container.read(trackerOAuthProvider).handleCallback(uri);
+      final outcome = await container
+          .read(trackerOAuthProvider)
+          .handleCallback(uri);
       if (!current()) return;
       final context = rootNavigatorKey.currentContext;
       if (context == null || !context.mounted) return;

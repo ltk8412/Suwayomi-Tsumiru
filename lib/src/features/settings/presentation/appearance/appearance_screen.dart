@@ -13,8 +13,6 @@ import '../../../../widgets/shell/detail_navigation_shell_screen.dart';
 import '../../search/settings_search_registry.dart';
 import '../../widgets/settings_group_card/settings_group_card.dart';
 import 'widgets/app_language/app_language_tile.dart';
-import 'widgets/eink_mode/eink_device_banner.dart';
-import 'widgets/eink_mode/eink_mode_tile.dart';
 import 'widgets/grid_cover_width_slider/grid_cover_width_slider.dart';
 import 'widgets/manga_thumbnail_backdrop/manga_thumbnail_backdrop_tile.dart';
 import 'widgets/show_recommendations/show_recommendations_tile.dart';
@@ -38,17 +36,10 @@ class AppearanceScreen extends ConsumerWidget {
             child: ListView(
               padding: settingsPagePadding(context),
               children: [
-                const EinkDeviceSuggestionBanner(),
-                SettingsGroupHeading(label: context.l10n.einkMode, first: true),
-                SettingsGroupCard(
-                  children: const [
-                    SettingsHighlightTarget(
-                      id: 'einkMode',
-                      child: EinkModeSwitchTile(),
-                    ),
-                  ],
+                SettingsGroupHeading(
+                  label: context.l10n.display,
+                  first: true,
                 ),
-                SettingsGroupHeading(label: context.l10n.display),
                 const SettingsGroupCard(
                   children: [
                     SettingsHighlightTarget(
