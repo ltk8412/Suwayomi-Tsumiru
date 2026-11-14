@@ -10,6 +10,7 @@ import 'package:material_ui/material_ui.dart';
 import '../constants/app_theme.dart';
 import '../constants/gen/assets.gen.dart';
 import '../features/settings/presentation/appearance/widgets/app_theme_selector/app_theme_providers.dart';
+import '../utils/theme/brand.dart';
 import '../utils/theme/theme_tokens.dart';
 
 /// Indigo Night uses original artwork; other themes tint shadows with their dark accent pair.
@@ -23,6 +24,15 @@ class TsumiruLogo extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
     final theme = ref.watch(appThemeKeyProvider) ?? AppTheme.indigoNight;
     final isDark = scheme.brightness == Brightness.dark;
+
+    // E-ink fork: a single flat black mark on white.
+    if (BrandColors.of(context).flat) {
+      return Image.asset(
+        'assets/icons/logo_eink.png',
+        width: size,
+        height: size,
+      );
+    }
 
     if (theme == AppTheme.indigoNight) {
       return Image.asset(

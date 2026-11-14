@@ -7,12 +7,10 @@
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../utils/theme/brand.dart';
+
 class TouchTabPager extends StatelessWidget {
-  const TouchTabPager({
-    super.key,
-    required this.children,
-    this.controller,
-  });
+  const TouchTabPager({super.key, required this.children, this.controller});
 
   final List<Widget> children;
   final TabController? controller;
@@ -20,12 +18,17 @@ class TouchTabPager extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final behavior = ScrollConfiguration.of(context);
+    final flat = BrandColors.of(context).flat;
     return ScrollConfiguration(
       behavior: behavior.copyWith(
         dragDevices: behavior.dragDevices.difference({PointerDeviceKind.mouse}),
       ),
       child: TabBarView(
         controller: controller,
+        // E-ink: no swipe slide between categories — switch by tapping the tab.
+        physics: flat
+            ? const NeverScrollableScrollPhysics()
+            : const PageScrollPhysics(),
         children: [
           for (final child in children)
             ScrollConfiguration(behavior: behavior, child: child),
