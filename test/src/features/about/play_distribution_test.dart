@@ -21,7 +21,7 @@ const play = bool.fromEnvironment('TSUMIRU_GOOGLE_PLAY');
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('About checks GitHub only outside Play', () async {
+  test('About never checks the original repo for updates', () async {
     var calls = 0;
     final repository = AboutRepository(
       client: GraphQLClient(
@@ -38,14 +38,13 @@ void main() {
     final result = await http.runWithClient(
       repository.checkUpdate,
       () => MockClient((request) async {
-        expect(request.url.host, 'api.github.com');
         calls++;
         return http.Response('{"tag_name":"v9.0.0"}', 200);
       }),
     );
     expect(result.hasError, isFalse);
-    expect(result.value?.toString(), play ? isNull : '9.0.0');
-    expect(calls, play ? 0 : 1);
+    expect(result.value, isNull);
+    expect(calls, 0);
   });
 
   test('server update checks remain available in every distribution', () async {
@@ -83,7 +82,7 @@ void main() {
     expect(updates?.single.tag, 'v2.0.0');
   });
 
-  test('headless checks GitHub only outside Play', () async {
+  test('headless never checks the original repo for updates', () async {
     var calls = 0;
     const record = BackgroundTokenRecord(gen: 0, authType: 'none');
     final client = NotificationBackgroundClient(
@@ -95,7 +94,6 @@ void main() {
         refreshFn: (_) async => (tokens: null, transient: false),
       ),
       httpClient: MockClient((request) async {
-        expect(request.url.host, 'api.github.com');
         calls++;
         return http.Response(
           '{"tag_name":"v9.0.0","html_url":"https://github.com/release"}',
@@ -104,8 +102,8 @@ void main() {
       }),
     );
     final result = await client.fetchLatestRelease();
-    expect(result?.version, play ? isNull : '9.0.0');
-    expect(calls, play ? 0 : 1);
+    expect(result, isNull);
+    expect(calls, 0);
   });
 
   test('stale app-only worker configurations cannot enable Play checks', () {

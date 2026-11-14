@@ -385,6 +385,7 @@ mutation NotifEnqueue($ids: [Int!]!) {
 
   /// Public GitHub release version and page; null on failure.
   Future<({String version, String url})?> fetchLatestRelease() async {
+    if (!appUpdateChecksEnabled) return null;
     if (isGooglePlayBuild) return null;
     try {
       final res = await _http.get(
