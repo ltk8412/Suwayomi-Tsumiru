@@ -43,12 +43,12 @@ android {
     }
 
     defaultConfig {
-        applicationId "io.github.aaronbamblett.tsumiru"
+        applicationId "io.github.aaronbamblett.tsumiru.eink"
         minSdk flutter.minSdkVersion // raised for flutter_foreground_task (Android 6.0+)
         targetSdk flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
-        manifestPlaceholders += [appLabel: "Tsumiru"]
+        manifestPlaceholders += [appLabel: "Tsumiru-Eink"]
 
         // Opt-in side-by-side test build — leaves the daily driver untouched.
         // Build with: flutter build apk --debug --android-project-arg=devBuild=1
@@ -56,7 +56,7 @@ android {
         if (project.hasProperty('devBuild')) {
             applicationIdSuffix ".dev"
             versionNameSuffix "-dev"
-            manifestPlaceholders += [appLabel: "Tsumiru Dev"]
+            manifestPlaceholders += [appLabel: "Tsumiru-Eink Dev"]
         }
     }
 

@@ -6,10 +6,11 @@
  </picture>
 </p>
 
-<h1 align="center">Tsumiru (E-Ink Fork)</h1>
+<h1 align="center">Tsumiru-Eink</h1>
 
-> **⚠️ E-ink fork.** This branch is a dedicated fork of Tsumiru, optimized for
-> e-ink readers (Meebook M103, Onyx Boox, Hisense, Bigme, …): a monochrome
+> **⚠️ Dedicated e-ink fork.** Tsumiru-Eink is a fork of
+> [Tsumiru](https://github.com/Suwayomi/Suwayomi-Tsumiru), optimized for e-ink
+> readers (Meebook M103, Onyx Boox, Hisense, Bigme, …): a monochrome
 > paper-white theme, no animations / transparency / shadows, paged reading, and
 > native EPD full refresh on supported devices.
 
@@ -23,7 +24,7 @@
 
 </div>
 
-<p align="center">A manga and webtoon reader for your Suwayomi server</p>
+<p align="center">A manga reader for your Suwayomi server, tuned for e-ink devices</p>
 
 > *Tsumiru* (積みる) takes the 積, "pile up", from *tsundoku* (積ん読), the Japanese habit of buying books faster than you can read them. It swaps the "read" for *miru*, "to look".
 
