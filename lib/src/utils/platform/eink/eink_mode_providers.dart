@@ -28,7 +28,9 @@ class EinkSuggestionDismissed extends _$EinkSuggestionDismissed
 }
 
 /// Whether the native EPD refresh probe succeeded; persisted after the first
-/// probe so launches never re-probe. Null until probed.
+/// successful probe so launches never re-probe. Failures are not persisted —
+/// the probe retries on the next E-Ink mode toggle, so firmware updates that
+/// add the API self-heal. Null until probed.
 @riverpod
 class NativeRefreshAvailable extends _$NativeRefreshAvailable
     with SharedPreferenceClientMixin<bool> {
@@ -36,13 +38,18 @@ class NativeRefreshAvailable extends _$NativeRefreshAvailable
   bool? build() => initialize(DBKeys.einkNativeRefreshAvailable);
 }
 
-/// Probes once (or returns the persisted outcome) and reports whether native
-/// EPD refresh works on this device.
+/// Probes (or returns the persisted success) and reports whether native EPD
+/// refresh works on this device.
 Future<bool> ensureNativeRefreshProbed(ProviderContainer container) async {
   final cached = container.read(nativeRefreshAvailableProvider);
-  if (cached != null) return cached;
+  if (cached ?? false) return true;
   final available = await triggerNativeRefresh();
-  container.read(nativeRefreshAvailableProvider.notifier).update(available);
+  if (available) {
+    container.read(nativeRefreshAvailableProvider.notifier).update(true);
+  } else {
+    // Leave the key unset so the next E-Ink mode toggle probes again.
+    container.read(nativeRefreshAvailableProvider.notifier).update(null);
+  }
   return available;
 }
 

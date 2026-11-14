@@ -221,40 +221,48 @@ desktop/web paths no-op).
 
 ## Phase 4 — Native refresh for Meebook M103 (flash fallback)
 
-Target device: **Meebook M103** (Boyue/Likebook rebrand — Rockchip platform,
-manufacturer `haoqing`). No vendor SDK is bundled; the Android `View` class is
-vendor-patched with refresh methods. Follow the readest/KOReader pattern:
+Target device: **Meebook M103** (Boyue/Likebook rebrand — Rockchip `rk3566`,
+manufacturer `haoqing`, Android 11). **Mechanism found on-device:** the vendor
+patches the framework with `android.os.EinkManager`, exposed through the standard
+`Context.EINK_SERVICE` (`getSystemService("eink")`), plus the binder interface
+`android.os.IEinkManager` (stripped at runtime by hidden-API filtering, so the
+binder is not usable from apps). The service wrapper offers
+`fullRefreshNoDelay()` (bumps `sys.eink.one_full_mode_timeline` + SurfaceFlinger
+flush) and `sendOneFullFrame()` (property bump only — the Rockchip EPD service
+watches the property and performs the full refresh). A `SystemProperties.set`
+bump of `sys.eink.one_full_mode_timeline` is the fallback when neither method
+reflects. Mode constants (`EPD_FULL_GC16` etc.) live in `EinkManager.EinkMode`.
 
-- Native `EinkRefreshController.kt` (Android-only) that **probes via reflection**
-  and stops at the first mechanism that works:
-  1. Boyue-style Rockchip: `View.requestEpdMode(EPD_FULL, true)` (the mechanism
-     that works on Meebook units).
-  2. Sibling `View` methods found by inspection (`refreshScreen`, `invalidate`
-     variants) — each guarded, tried in order.
-- Every probe is try/catch-wrapped; **a `success: false` result is a soft no-op**
-  on non-e-ink hardware. No Onyx `EpdController` work in this revision.
-- **Probe result is cached and persisted** — `nativeRefreshAvailableProvider`
-  backed by a bool DBKey (e.g. `einkNativeRefreshAvailable`), written once after
-  the first successful/failed probe, so the app never re-probes on launch.
+- Native `probeEpdRefresh()` in MainActivity tries, in order, each guarded by
+  try/catch and soft-no-op on other hardware:
+  1. Boyue-style patched `View.requestEpdMode(EPD_FULL, true)` (covers firmware
+     variants that patch `android.view.View`).
+  2. `getSystemService("eink")` → reflect `fullRefreshNoDelay()` /
+     `sendOneFullFrame()`.
+  3. `SystemProperties.set` bump of `sys.eink.one_full_mode_timeline`.
+- **Success is persisted** — `nativeRefreshAvailableProvider` backed by a bool
+  DBKey (`einkNativeRefreshAvailable`), written once after the first successful
+  probe, so launches never re-probe. Failures are NOT persisted: the next
+  E-Ink mode toggle re-probes, so firmware updates self-heal.
 - **Native refresh replaces the flash overlay by default** when available
   (page turns trigger native refresh every N pages, reusing
   `DBKeys.flashPageInterval`). The flash overlay remains **opt-in** via the
   existing `flashOnPageChange` setting for users who want both.
-- **Fallback:** any device where the probe doesn't apply (non-Boyue platforms,
-  or M103 firmware variants where the mechanism is absent) automatically falls
-  back to the flash overlay — the preset already enables `flashOnPageChange`
-  for exactly this case. No user action required.
+- **Fallback:** any device where the probe fails (non-Rockchip platforms, or
+  firmware variants without the service) automatically falls back to the flash
+  overlay — the preset enables `flashOnPageChange` for exactly this case.
 - The UI hides native-refresh-related controls when `nativeRefreshAvailableProvider`
-  is false.
+  is false (no extra controls shipped yet).
 
-**Files:** `android/app/src/main/kotlin/.../MainActivity.kt` (or plugin file),
-`lib/src/utils/platform/eink/epd_refresh.dart`, reader turn callbacks,
+**Files:** `android/app/src/main/kotlin/.../MainActivity.kt`,
+`lib/src/utils/platform/eink/epd_refresh.dart`, `reader_flash_overlay.dart`,
+`lib/src/utils/platform/eink/eink_mode_providers.dart`,
 `lib/src/constants/db_keys.dart`.
 
-**Risk/notes:** real-hardware verification on a Meebook **M103** (primary) plus a
-plain Android tablet (fallback path). The reflection probe is intentionally
-conservative — never switch the panel into a manual update mode, never touch
-system auto-update state.
+**Risk/notes:** verified on a Meebook **M103** over ADB (logcat:
+`EinkManager.fullRefreshNoDelay() invoked`). The probe is intentionally
+conservative — never switches the panel into a manual update mode, never touches
+system auto-update state beyond the documented one-shot full-refresh timeline.
 
 ---
 
