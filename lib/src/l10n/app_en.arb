@@ -2029,6 +2029,10 @@
   "@einkEnable": {
     "description": "Enable action on the e-ink suggestion banner"
   },
+  "einkManagedSubtitle": "Managed by E-Ink mode",
+  "@einkManagedSubtitle": {
+    "description": "Subtitle shown on settings that E-Ink mode disables"
+  },
   "einkMode": "E-Ink mode",
   "@einkMode": {
     "description": "Appearance switch that applies e-ink optimizations"

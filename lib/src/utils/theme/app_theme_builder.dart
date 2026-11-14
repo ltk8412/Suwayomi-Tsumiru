@@ -9,11 +9,7 @@ import 'oklch_contrast.dart';
 import 'theme_tokens.dart';
 
 /// The [ColorScheme] a theme uses at [brightness]; Custom is seed-derived.
-ColorScheme schemeFor(
-  AppTheme theme,
-  Brightness brightness,
-  Color customSeed,
-) {
+ColorScheme schemeFor(AppTheme theme, Brightness brightness, Color customSeed) {
   if (theme != AppTheme.custom) {
     return schemeFromTokens(tokensFor(theme, brightness), brightness);
   }
@@ -58,7 +54,10 @@ ThemeData buildAppTheme({
     gradient: tokens?.grad ?? schemeBrandGradient(scheme),
     onGradient: tokens?.onAccent ?? const Color(0xFF0B0D1A),
     success: brandSuccessColor(brightness),
-    neutral: theme == AppTheme.mono && brightness == Brightness.light,
+    neutral:
+        (theme == AppTheme.mono || theme == AppTheme.einkPaper) &&
+        brightness == Brightness.light,
+    flat: theme == AppTheme.einkPaper,
     navSelectedFill: navFill,
   );
 

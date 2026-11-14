@@ -30,6 +30,7 @@ class BrandColors extends ThemeExtension<BrandColors> {
     required this.onGradient,
     required this.success,
     this.neutral = false,
+    this.flat = false,
     this.navSelectedFill,
   });
 
@@ -42,6 +43,9 @@ class BrandColors extends ThemeExtension<BrandColors> {
   /// Monochrome light removes hues from genre chips and cover backdrops.
   final bool neutral;
 
+  /// E-ink paper skips decorative glows; gradients are already flat.
+  final bool flat;
+
   final Color? navSelectedFill;
 
   @override
@@ -50,12 +54,14 @@ class BrandColors extends ThemeExtension<BrandColors> {
     Color? onGradient,
     Color? success,
     bool? neutral,
+    bool? flat,
     Color? navSelectedFill,
   }) => BrandColors(
     gradient: gradient ?? this.gradient,
     onGradient: onGradient ?? this.onGradient,
     success: success ?? this.success,
     neutral: neutral ?? this.neutral,
+    flat: flat ?? this.flat,
     navSelectedFill: navSelectedFill ?? this.navSelectedFill,
   );
 
@@ -67,6 +73,7 @@ class BrandColors extends ThemeExtension<BrandColors> {
       onGradient: Color.lerp(onGradient, other.onGradient, t)!,
       success: Color.lerp(success, other.success, t)!,
       neutral: t < 0.5 ? neutral : other.neutral,
+      flat: t < 0.5 ? flat : other.flat,
       navSelectedFill: Color.lerp(navSelectedFill, other.navSelectedFill, t),
     );
   }
@@ -181,7 +188,7 @@ class BrandButton extends StatelessWidget {
         gradient: disabled ? null : brand.gradient,
         color: disabled ? cs.onSurface.withValues(alpha: 0.12) : null,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: disabled ? null : brandGlow(cs),
+        boxShadow: disabled || brand.flat ? null : brandGlow(cs),
       ),
       child: Material(
         color: Colors.transparent,
@@ -458,11 +465,12 @@ class BrandFab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final brand = BrandColors.of(context);
     return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: BrandColors.of(context).gradient,
+        gradient: brand.gradient,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: brandGlow(cs),
+        boxShadow: brand.flat ? null : brandGlow(cs),
       ),
       child: Material(
         color: Colors.transparent,

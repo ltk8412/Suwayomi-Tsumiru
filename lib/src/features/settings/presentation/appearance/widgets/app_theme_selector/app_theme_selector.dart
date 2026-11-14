@@ -7,6 +7,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../../../../../constants/app_theme.dart';
 import '../../../../../../utils/extensions/custom_extensions.dart';
 import '../../../../../../utils/motion/reduce_motion.dart';
+import '../../../../../../utils/platform/eink/eink_mode_providers.dart';
 import '../../../../../../utils/theme/app_color_scheme.dart';
 import '../../../../../../utils/theme/theme_tokens.dart';
 import 'app_theme_providers.dart';
@@ -23,6 +24,7 @@ class ThemeSelector extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selected = ref.watch(appThemeKeyProvider) ?? AppTheme.indigoNight;
+    final einkActive = ref.watch(einkActiveProvider);
     final controller = useScrollController();
     final rebuild = useState(0);
     useEffect(() {
@@ -79,73 +81,99 @@ class ThemeSelector extends HookConsumerWidget {
       ),
     );
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (title != null || canScroll)
-          Row(
-            children: [
-              if (title != null) Expanded(child: title!) else const Spacer(),
-              if (canScroll) ...[
-                arrow(
-                  icon: FluentIcons.chevron_left_24_regular,
-                  tooltip: context.l10n.back,
-                  enabled: offset > 0,
-                  onPressed: () => scrollBy(-1),
+    return IgnorePointer(
+      // E-ink mode forces the paper theme; the picker stays visible but inert.
+      ignoring: einkActive,
+      child: Opacity(
+        opacity: einkActive ? 0.4 : 1,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (title != null || canScroll)
+              Row(
+                children: [
+                  if (title != null)
+                    Expanded(child: title!)
+                  else
+                    const Spacer(),
+                  if (canScroll) ...[
+                    arrow(
+                      icon: FluentIcons.chevron_left_24_regular,
+                      tooltip: context.l10n.back,
+                      enabled: offset > 0,
+                      onPressed: () => scrollBy(-1),
+                    ),
+                    const SizedBox(width: 8),
+                    arrow(
+                      icon: FluentIcons.chevron_right_24_regular,
+                      tooltip: context.l10n.next,
+                      enabled: offset < maxExtent,
+                      onPressed: () => scrollBy(1),
+                    ),
+                  ],
+                  const SizedBox(width: 16),
+                ],
+              ),
+            NotificationListener<ScrollMetricsNotification>(
+              onNotification: (_) {
+                rebuild.value++;
+                return false;
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
                 ),
-                const SizedBox(width: 8),
-                arrow(
-                  icon: FluentIcons.chevron_right_24_regular,
-                  tooltip: context.l10n.next,
-                  enabled: offset < maxExtent,
-                  onPressed: () => scrollBy(1),
+                child: SizedBox(
+                  height: _cardsHeight,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      // A half-visible card signals that the row scrolls.
+                      const slot = 104.0;
+                      final whole = (constraints.maxWidth / slot - 0.5)
+                          .floor()
+                          .clamp(1, 100);
+                      final cardWidth =
+                          constraints.maxWidth / (whole + 0.5) - 12;
+                      return ListView(
+                        controller: controller,
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          // Enum indices are persisted; keep display order independent.
+                          for (final theme in [
+                            ...AppTheme.values.where(
+                              (t) => t != AppTheme.custom,
+                            ),
+                            AppTheme.custom,
+                          ])
+                            _ThemeCard(
+                              theme: theme,
+                              width: cardWidth,
+                              selected: theme == selected,
+                              onTap: () => ref
+                                  .read(appThemeKeyProvider.notifier)
+                                  .update(theme),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
                 ),
-              ],
-              const SizedBox(width: 16),
-            ],
-          ),
-        NotificationListener<ScrollMetricsNotification>(
-          onNotification: (_) {
-            rebuild.value++;
-            return false;
-          },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: SizedBox(
-              height: _cardsHeight,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  // A half-visible card signals that the row scrolls.
-                  const slot = 104.0;
-                  final whole = (constraints.maxWidth / slot - 0.5)
-                      .floor()
-                      .clamp(1, 100);
-                  final cardWidth = constraints.maxWidth / (whole + 0.5) - 12;
-                  return ListView(
-                    controller: controller,
-                    scrollDirection: Axis.horizontal,
-                    children: [
-                      // Enum indices are persisted; keep display order independent.
-                      for (final theme in [
-                        ...AppTheme.values.where((t) => t != AppTheme.custom),
-                        AppTheme.custom,
-                      ])
-                        _ThemeCard(
-                          theme: theme,
-                          width: cardWidth,
-                          selected: theme == selected,
-                          onTap: () => ref
-                              .read(appThemeKeyProvider.notifier)
-                              .update(theme),
-                        ),
-                    ],
-                  );
-                },
               ),
             ),
-          ),
+            if (einkActive)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  context.l10n.einkManagedSubtitle,
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: cs.onSurfaceVariant,
+                  ),
+                ),
+              ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
@@ -201,7 +229,11 @@ class _ThemeCard extends StatelessWidget {
                   _dot(accent2),
                   const Spacer(),
                   if (selected)
-                    Icon(FluentIcons.checkmark_circle_24_filled, size: 18, color: accent),
+                    Icon(
+                      FluentIcons.checkmark_circle_24_filled,
+                      size: 18,
+                      color: accent,
+                    ),
                 ],
               ),
               const SizedBox(height: 10),

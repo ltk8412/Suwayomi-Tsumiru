@@ -13,7 +13,7 @@ void main() {
     'AppTheme': [
       'indigoNight', 'carbon', 'plum', 'custom', 'regression', 'ember',
       'synthwave', 'terminal', 'catppuccin', 'nord', 'gruvbox', 'dracula',
-      'mono', 'royal'
+      'mono', 'royal', 'einkPaper'
     ],
     'AuthType': ['none', 'basic', 'simpleLogin', 'uiLogin'],
     'CenterMarginType': ['none', 'doublePage', 'widePage', 'doubleAndWide'],

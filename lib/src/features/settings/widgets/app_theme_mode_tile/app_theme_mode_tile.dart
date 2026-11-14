@@ -12,6 +12,7 @@ import '../../../../constants/db_keys.dart';
 import '../../../../utils/extensions/custom_extensions.dart';
 import '../../../../utils/mixin/shared_preferences_client_mixin.dart';
 import '../../../../utils/motion/reduce_motion.dart';
+import '../../../../utils/platform/eink/eink_mode_providers.dart';
 import '../../../../widgets/popup_widgets/radio_list_popup.dart';
 
 part 'app_theme_mode_tile.g.dart';
@@ -38,23 +39,31 @@ class AppThemeModeTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(appThemeModeProvider);
+    final einkActive = ref.watch(einkActiveProvider);
     return ListTile(
-      subtitle: themeMode != null ? Text(themeMode.toLocale(context)) : null,
+      enabled: !einkActive,
+      subtitle: einkActive
+          ? Text(context.l10n.einkManagedSubtitle)
+          : themeMode != null
+          ? Text(themeMode.toLocale(context))
+          : null,
       title: Text(context.l10n.appTheme),
-      onTap: () => showDialog(
-        context: context,
-        builder: (context) => RadioListPopup<ThemeMode>(
-          title: context.l10n.appTheme,
-          optionList: ThemeMode.values,
-          value: themeMode ?? ThemeMode.system,
-          getOptionTitle: (value) => value.toLocale(context),
-          onChange: (enumValue) async {
-            ref.read(appThemeModeProvider.notifier).update(enumValue);
-            if (context.mounted) Navigator.pop(context);
-          },
-        ),
-        animationStyle: context.motionStyle,
-      ),
+      onTap: einkActive
+          ? null
+          : () => showDialog(
+              context: context,
+              builder: (context) => RadioListPopup<ThemeMode>(
+                title: context.l10n.appTheme,
+                optionList: ThemeMode.values,
+                value: themeMode ?? ThemeMode.system,
+                getOptionTitle: (value) => value.toLocale(context),
+                onChange: (enumValue) async {
+                  ref.read(appThemeModeProvider.notifier).update(enumValue);
+                  if (context.mounted) Navigator.pop(context);
+                },
+              ),
+              animationStyle: context.motionStyle,
+            ),
     );
   }
 }

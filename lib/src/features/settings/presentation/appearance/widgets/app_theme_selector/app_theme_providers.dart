@@ -10,8 +10,7 @@ part 'app_theme_providers.g.dart';
 class AppThemeKey extends _$AppThemeKey
     with SharedPreferenceEnumClientMixin<AppTheme> {
   @override
-  AppTheme? build() =>
-      initialize(DBKeys.appTheme, enumList: AppTheme.values);
+  AppTheme? build() => initialize(DBKeys.appTheme, enumList: AppTheme.values);
 }
 
 @riverpod

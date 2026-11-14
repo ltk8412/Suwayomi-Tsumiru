@@ -509,6 +509,44 @@ const _royalLight = ThemeTokens(
     colors: [Color(0xFF5F45CC), Color(0xFF8E3FB8)],
   ),
 );
+// Paper-white e-ink: flat pure surfaces, pure black ink, no decorative hues.
+// The flat single-color gradients keep Brand components solid.
+const _einkPaperDark = ThemeTokens(
+  bg: Color(0xFF000000),
+  bg2: Color(0xFF0F0F0F),
+  ink: Color(0xFFFFFFFF),
+  muted: Color(0xFFB8B8B8),
+  faint: Color(0xFF7A7A7A),
+  accent: Color(0xFFFFFFFF),
+  accent2: Color(0xFFB8B8B8),
+  danger: Color(0xFFFF6B6B),
+  border: Color(0x24FFFFFF),
+  onAccent: Color(0xFF000000),
+  accentFill: Color(0xFF3A3A3A),
+  grad: LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFFFFFFF), Color(0xFFFFFFFF)],
+  ),
+);
+const _einkPaperLight = ThemeTokens(
+  bg: Color(0xFFFFFFFF),
+  bg2: Color(0xFFFFFFFF),
+  ink: Color(0xFF000000),
+  muted: Color(0xFF333333),
+  faint: Color(0xFF767676),
+  accent: Color(0xFF000000),
+  accent2: Color(0xFF333333),
+  danger: Color(0xFFAE2F34),
+  border: Color(0xFFC4C4C4),
+  onAccent: Color(0xFFFFFFFF),
+  accentBg: Color(0xFFE8E8E8),
+  grad: LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF000000), Color(0xFF000000)],
+  ),
+);
 
 ThemeTokens tokensFor(AppTheme theme, Brightness brightness) {
   assert(theme != AppTheme.custom, 'custom theme has no fixed tokens');
@@ -528,5 +566,6 @@ ThemeTokens tokensFor(AppTheme theme, Brightness brightness) {
     AppTheme.dracula => isDark ? _draculaDark : _draculaLight,
     AppTheme.mono => isDark ? _monoDark : _monoLight,
     AppTheme.royal => isDark ? _royalDark : _royalLight,
+    AppTheme.einkPaper => isDark ? _einkPaperDark : _einkPaperLight,
   };
 }

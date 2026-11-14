@@ -32,6 +32,7 @@ import 'utils/extensions/custom_extensions.dart';
 import 'utils/launch_url_in_web.dart';
 import 'utils/misc/toast/toast.dart';
 import 'utils/motion/reduce_motion.dart';
+import 'utils/platform/eink/eink_mode_providers.dart';
 import 'utils/theme/app_theme_builder.dart';
 import 'widgets/app_progress.dart';
 import 'widgets/desktop/desktop_page_frame.dart';
@@ -103,9 +104,14 @@ class TsumiruApp extends HookConsumerWidget {
       return null;
     }, const []);
 
-    final themeMode = ref.watch(appThemeModeProvider);
+    final einkActive = ref.watch(einkActiveProvider);
+    final themeMode = einkActive
+        ? ThemeMode.light
+        : ref.watch(appThemeModeProvider);
     final appLocale = ref.watch(l10nProvider);
-    final appTheme = ref.watch(appThemeKeyProvider) ?? AppTheme.indigoNight;
+    final appTheme = einkActive
+        ? AppTheme.einkPaper
+        : ref.watch(appThemeKeyProvider) ?? AppTheme.indigoNight;
     final customSeed = ref.watch(customThemeColorProvider);
     final isTrueBlack = ref.watch(isTrueBlackProvider).ifNull();
     applyForcePortrait(ref.watch(forcePortraitProvider).ifNull());
@@ -138,9 +144,7 @@ class TsumiruApp extends HookConsumerWidget {
                     ),
                   ),
                   if (sessionChanging)
-                    const Scaffold(
-                      body: Center(child: AppCircularProgress()),
-                    ),
+                    const Scaffold(body: Center(child: AppCircularProgress())),
                 ],
               ),
             ),
@@ -180,7 +184,10 @@ class AccountSessionLoading extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final mode = ref.watch(appThemeModeProvider) ?? ThemeMode.system;
+    final einkActive = ref.watch(einkActiveProvider);
+    final mode = einkActive
+        ? ThemeMode.light
+        : ref.watch(appThemeModeProvider) ?? ThemeMode.system;
     final brightness = switch (mode) {
       ThemeMode.dark => Brightness.dark,
       ThemeMode.light => Brightness.light,
@@ -188,7 +195,9 @@ class AccountSessionLoading extends ConsumerWidget {
     };
     return Theme(
       data: buildAppTheme(
-        theme: ref.watch(appThemeKeyProvider) ?? AppTheme.indigoNight,
+        theme: einkActive
+            ? AppTheme.einkPaper
+            : ref.watch(appThemeKeyProvider) ?? AppTheme.indigoNight,
         brightness: brightness,
         customSeed: Color(ref.watch(customThemeColorProvider) ?? 0xFF7C7BFF),
         amoled: ref.watch(isTrueBlackProvider).ifNull(),
