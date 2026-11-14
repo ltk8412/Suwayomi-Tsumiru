@@ -118,6 +118,13 @@ List<SettingsSearchEntry> get appearanceSettingsSearchEntries => [
     visible: (_, _) => true,
   ),
   SettingsSearchEntry(
+    id: 'einkMode',
+    title: (l) => l.einkMode,
+    breadcrumb: (l) => l.appearance,
+    open: (c) => const AppearanceSettingsRoute(highlight: 'einkMode').push(c),
+    visible: (_, _) => true,
+  ),
+  SettingsSearchEntry(
     id: 'pureBlack',
     title: (l) => l.pureBlackAmoled,
     breadcrumb: (l) => l.appearance,

@@ -210,6 +210,25 @@ class MainActivity: FlutterAndroidVolumeKeydownActivity() {
                     else -> result.notImplemented()
                 }
             }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "tsumiru/eink")
+            .setMethodCallHandler { call, result ->
+                if (call.method != "deviceInfo") {
+                    result.notImplemented()
+                    return@setMethodCallHandler
+                }
+                val socManufacturer = try {
+                    Class.forName("android.os.SystemProperties")
+                        .getMethod("get", String::class.java)
+                        .invoke(null, "ro.soc.manufacturer") as? String
+                } catch (_: Throwable) {
+                    null
+                }
+                result.success(mapOf(
+                    "model" to Build.MODEL,
+                    "manufacturer" to Build.MANUFACTURER,
+                    "socManufacturer" to socManufacturer,
+                ))
+            }
     }
 
     override fun onDestroy() {

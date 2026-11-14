@@ -258,7 +258,11 @@ enum DBKeys {
   colorFilterValue(0),
   colorFilterBlendMode(ColorFilterBlendMode.defaultBlend),
   grayscale(false),
-  invertedColors(false);
+  invertedColors(false),
+  // Single toggle that applies e-ink settings, forces the e-ink theme and
+  // disables the settings it manages while on.
+  einkMode(false),
+  einkSuggestionDismissed(false);
 
   const DBKeys(this.initial);
 

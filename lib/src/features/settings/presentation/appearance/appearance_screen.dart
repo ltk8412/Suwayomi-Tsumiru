@@ -17,6 +17,8 @@ import '../../widgets/settings_group_card/settings_group_card.dart';
 import 'widgets/app_language/app_language_tile.dart';
 import 'widgets/app_theme_selector/app_theme_providers.dart';
 import 'widgets/app_theme_selector/app_theme_selector.dart';
+import 'widgets/eink_mode/eink_device_banner.dart';
+import 'widgets/eink_mode/eink_mode_tile.dart';
 import 'widgets/grid_cover_width_slider/grid_cover_width_slider.dart';
 import 'widgets/is_true_black/is_true_black_tile.dart';
 import 'widgets/manga_thumbnail_backdrop/manga_thumbnail_backdrop_tile.dart';
@@ -43,12 +45,17 @@ class AppearanceScreen extends ConsumerWidget {
             child: ListView(
               padding: settingsPagePadding(context),
               children: [
+                const EinkDeviceSuggestionBanner(),
                 SettingsGroupHeading(
                   label: context.l10n.appThemeTitle,
                   first: true,
                 ),
                 SettingsGroupCard(
                   children: [
+                    const SettingsHighlightTarget(
+                      id: 'einkMode',
+                      child: EinkModeSwitchTile(),
+                    ),
                     const SettingsHighlightTarget(
                       id: 'appThemeMode',
                       child: AppThemeModeTile(),
