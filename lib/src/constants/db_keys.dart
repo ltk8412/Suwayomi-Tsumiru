@@ -108,7 +108,7 @@ enum DBKeys {
   refreshChaptersFromSource(false),
   pinchToZoom(true),
   readerIgnoreSafeArea(true),
-  appTheme(AppTheme.indigoNight),
+  appTheme(AppTheme.einkPaper),
   customThemeColor(0xFF7C7BFF),
   historyEnabled(true),
   historyRetentionDays(90),

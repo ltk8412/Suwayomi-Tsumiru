@@ -7,20 +7,15 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../../../../constants/app_theme.dart';
 import '../../../../utils/extensions/custom_extensions.dart';
 import '../../../../widgets/desktop/desktop_top_bar.dart';
 import '../../../../widgets/shell/detail_navigation_shell_screen.dart';
 import '../../search/settings_search_registry.dart';
-import '../../widgets/app_theme_mode_tile/app_theme_mode_tile.dart';
 import '../../widgets/settings_group_card/settings_group_card.dart';
 import 'widgets/app_language/app_language_tile.dart';
-import 'widgets/app_theme_selector/app_theme_providers.dart';
-import 'widgets/app_theme_selector/app_theme_selector.dart';
 import 'widgets/eink_mode/eink_device_banner.dart';
 import 'widgets/eink_mode/eink_mode_tile.dart';
 import 'widgets/grid_cover_width_slider/grid_cover_width_slider.dart';
-import 'widgets/is_true_black/is_true_black_tile.dart';
 import 'widgets/manga_thumbnail_backdrop/manga_thumbnail_backdrop_tile.dart';
 import 'widgets/show_recommendations/show_recommendations_tile.dart';
 
@@ -29,8 +24,6 @@ class AppearanceScreen extends ConsumerWidget {
 
   @override
   Widget build(context, ref) {
-    final themeMode = ref.watch(appThemeModeProvider);
-    final theme = ref.watch(appThemeKeyProvider);
     final showRecommendations = ref.watch(showRecommendationsProvider);
     final topBar = showsMergedTopBar(context);
     final title = Text(context.l10n.appearance);
@@ -46,34 +39,13 @@ class AppearanceScreen extends ConsumerWidget {
               padding: settingsPagePadding(context),
               children: [
                 const EinkDeviceSuggestionBanner(),
-                SettingsGroupHeading(
-                  label: context.l10n.appThemeTitle,
-                  first: true,
-                ),
+                SettingsGroupHeading(label: context.l10n.einkMode, first: true),
                 SettingsGroupCard(
-                  children: [
-                    const SettingsHighlightTarget(
+                  children: const [
+                    SettingsHighlightTarget(
                       id: 'einkMode',
                       child: EinkModeSwitchTile(),
                     ),
-                    const SettingsHighlightTarget(
-                      id: 'appThemeMode',
-                      child: AppThemeModeTile(),
-                    ),
-                    const SettingsHighlightTarget(
-                      id: 'theme',
-                      child: ThemeSelector(),
-                    ),
-                    if (theme == AppTheme.custom)
-                      const SettingsHighlightTarget(
-                        id: 'customColor',
-                        child: CustomColorTile(),
-                      ),
-                    if (themeMode != ThemeMode.light)
-                      const SettingsHighlightTarget(
-                        id: 'pureBlack',
-                        child: IsTrueBlackTile(),
-                      ),
                   ],
                 ),
                 SettingsGroupHeading(label: context.l10n.display),

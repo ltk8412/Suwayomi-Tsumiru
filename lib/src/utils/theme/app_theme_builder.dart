@@ -2,62 +2,28 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../../constants/app_theme.dart';
 import 'app_color_scheme.dart';
 import 'brand.dart';
-import 'oklch_contrast.dart';
 import 'theme_tokens.dart';
 
-/// The [ColorScheme] a theme uses at [brightness]; Custom is seed-derived.
-ColorScheme schemeFor(AppTheme theme, Brightness brightness, Color customSeed) {
-  if (theme != AppTheme.custom) {
-    return schemeFromTokens(tokensFor(theme, brightness), brightness);
-  }
-  final seeded = ColorScheme.fromSeed(
-    seedColor: customSeed,
-    brightness: brightness,
-  );
-  if (brightness == Brightness.light) return seeded;
-  return seeded.copyWith(
-    primary: solveContrast(
-      seeded.primary,
-      seeded.surface,
-      contrastRatio(seeded.onSurfaceVariant, seeded.surface),
-      lighten: true,
-    ),
-    onPrimary: const Color(0xFF0A0A12),
-  );
-}
+/// The [ColorScheme] the e-ink fork uses at [brightness].
+ColorScheme schemeFor(Brightness brightness) =>
+    schemeFromTokens(tokensFor(brightness), brightness);
 
-/// Named themes use brand tokens; Custom is seed-derived. AMOLED affects dark mode only.
-ThemeData buildAppTheme({
-  required AppTheme theme,
-  required Brightness brightness,
-  required Color customSeed,
-  required bool amoled,
-}) {
-  final tokens = theme == AppTheme.custom ? null : tokensFor(theme, brightness);
-  ColorScheme scheme = schemeFor(theme, brightness, customSeed);
+/// The single flat e-ink theme: black-on-white surfaces, no shadows or
+/// translucency, bordered buttons.
+ThemeData buildAppTheme({required Brightness brightness}) {
+  final tokens = tokensFor(brightness);
+  ColorScheme scheme = schemeFor(brightness);
 
-  if (brightness == Brightness.dark && amoled) {
-    scheme = applyAmoled(scheme);
-  }
+  final navFill = tokens.accentFill;
 
-  final navFill =
-      tokens?.accentFill ??
-      (brightness == Brightness.dark
-          ? solveContrast(scheme.primary, scheme.onSurface, 7, lighten: false)
-          : null);
-
-  // Named light themes use their own gradients and on-accent colors.
   final brandColors = BrandColors(
-    gradient: tokens?.grad ?? schemeBrandGradient(scheme),
-    onGradient: tokens?.onAccent ?? const Color(0xFF0B0D1A),
+    gradient: tokens.grad ?? schemeBrandGradient(scheme),
+    onGradient: tokens.onAccent ?? const Color(0xFF0B0D1A),
     success: brandSuccessColor(brightness),
-    neutral:
-        (theme == AppTheme.mono || theme == AppTheme.einkPaper) &&
-        brightness == Brightness.light,
-    flat: theme == AppTheme.einkPaper,
+    neutral: brightness == Brightness.light,
+    flat: true,
     navSelectedFill: navFill,
   );
 
@@ -65,38 +31,20 @@ ThemeData buildAppTheme({
   final outline = scheme.outlineVariant;
   final brightPrimary = brandBrightAccent(scheme);
 
-  // E-ink paper: flat black-on-white surfaces, no elevation shadows, buttons
-  // become white with a black outline and black text.
-  final flat = theme == AppTheme.einkPaper;
-
   ButtonStyle filledLike() => ButtonStyle(
     backgroundColor: WidgetStateProperty.resolveWith(
-      (s) => flat
-          ? (s.contains(WidgetState.disabled)
-                ? scheme.surfaceContainerHighest
-                : scheme.surface)
-          : s.contains(WidgetState.disabled)
-          ? scheme.onSurface.withValues(alpha: 0.12)
-          : primary,
+      (s) => s.contains(WidgetState.disabled)
+          ? scheme.surfaceContainerHighest
+          : scheme.surface,
     ),
     foregroundColor: WidgetStateProperty.resolveWith(
-      (s) => flat
-          ? (s.contains(WidgetState.disabled)
-                ? scheme.onSurfaceVariant
-                : scheme.onSurface)
-          : s.contains(WidgetState.disabled)
-          ? scheme.onSurface.withValues(alpha: 0.38)
-          : scheme.onPrimary,
+      (s) => s.contains(WidgetState.disabled)
+          ? scheme.onSurfaceVariant
+          : scheme.onSurface,
     ),
-    shadowColor: WidgetStatePropertyAll(
-      flat ? Colors.transparent : primary.withValues(alpha: 0.6),
-    ),
-    elevation: WidgetStateProperty.resolveWith(
-      (s) => flat || s.contains(WidgetState.disabled) ? 0 : 6,
-    ),
-    side: flat
-        ? WidgetStatePropertyAll(BorderSide(color: scheme.onSurface))
-        : null,
+    shadowColor: const WidgetStatePropertyAll(Colors.transparent),
+    elevation: const WidgetStatePropertyAll(0),
+    side: WidgetStatePropertyAll(BorderSide(color: scheme.onSurface)),
     shape: WidgetStatePropertyAll(
       RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
     ),
@@ -194,42 +142,15 @@ ThemeData buildAppTheme({
       ),
     ),
     dividerTheme: DividerThemeData(color: outline, thickness: 1, space: 1),
-    chipTheme: flat
-        ? ChipThemeData(
-            backgroundColor: scheme.surface,
-            selectedColor: scheme.surfaceContainerHighest,
-            side: WidgetStateBorderSide.resolveWith(
-              (_) => BorderSide(color: scheme.onSurface),
-            ),
-            labelStyle: TextStyle(color: scheme.onSurface),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(11),
-            ),
-          )
-        : tokens?.accentBg != null
-        ? ChipThemeData(
-            backgroundColor: Colors.transparent,
-            selectedColor: tokens!.accentBg,
-            side: WidgetStateBorderSide.resolveWith(
-              (s) => BorderSide(
-                color: s.contains(WidgetState.selected)
-                    ? scheme.primary
-                    : scheme.outlineVariant,
-              ),
-            ),
-            labelStyle: TextStyle(color: scheme.onSurface),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(11),
-            ),
-          )
-        : ChipThemeData(
-            backgroundColor: primary.withValues(alpha: 0.12),
-            side: BorderSide(color: primary.withValues(alpha: 0.40)),
-            labelStyle: TextStyle(color: scheme.onSurface),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(11),
-            ),
-          ),
+    chipTheme: ChipThemeData(
+      backgroundColor: scheme.surface,
+      selectedColor: scheme.surfaceContainerHighest,
+      side: WidgetStateBorderSide.resolveWith(
+        (_) => BorderSide(color: scheme.onSurface),
+      ),
+      labelStyle: TextStyle(color: scheme.onSurface),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
+    ),
     switchTheme: SwitchThemeData(
       thumbColor: WidgetStateProperty.resolveWith(
         (s) => s.contains(WidgetState.selected) ? primary : scheme.outline,
@@ -248,12 +169,12 @@ ThemeData buildAppTheme({
     ),
     progressIndicatorTheme: ProgressIndicatorThemeData(color: primary),
     floatingActionButtonTheme: FloatingActionButtonThemeData(
-      backgroundColor: flat ? scheme.surface : primary,
-      foregroundColor: flat ? scheme.onSurface : scheme.onPrimary,
-      elevation: flat ? 0 : 6,
+      backgroundColor: scheme.surface,
+      foregroundColor: scheme.onSurface,
+      elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
-        side: flat ? BorderSide(color: scheme.onSurface) : BorderSide.none,
+        side: BorderSide(color: scheme.onSurface),
       ),
     ),
     filledButtonTheme: FilledButtonThemeData(style: filledLike()),
@@ -261,45 +182,33 @@ ThemeData buildAppTheme({
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: ButtonStyle(
         foregroundColor: WidgetStatePropertyAll(brightPrimary),
-        side: WidgetStatePropertyAll(
-          BorderSide(
-            color: flat ? scheme.onSurface : primary.withValues(alpha: 0.5),
-          ),
-        ),
+        side: WidgetStatePropertyAll(BorderSide(color: scheme.onSurface)),
         shape: WidgetStatePropertyAll(
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
       ),
     ),
-    snackBarTheme: flat
-        ? SnackBarThemeData(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(4),
-              side: BorderSide(color: scheme.onSurface),
-            ),
-          )
-        : const SnackBarThemeData(),
-    bottomSheetTheme: flat
-        ? BottomSheetThemeData(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
-              ),
-              side: BorderSide(color: scheme.onSurface),
-            ),
-          )
-        : const BottomSheetThemeData(),
-    dialogTheme: flat
-        ? DialogThemeData(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: scheme.onSurface),
-            ),
-          )
-        : const DialogThemeData(),
+    snackBarTheme: SnackBarThemeData(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(4),
+        side: BorderSide(color: scheme.onSurface),
+      ),
+    ),
+    bottomSheetTheme: BottomSheetThemeData(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        side: BorderSide(color: scheme.onSurface),
+      ),
+    ),
+    dialogTheme: DialogThemeData(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: scheme.onSurface),
+      ),
+    ),
     textButtonTheme: TextButtonThemeData(
       style: ButtonStyle(
         foregroundColor: WidgetStateProperty.resolveWith(

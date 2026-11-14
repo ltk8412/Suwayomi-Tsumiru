@@ -4,7 +4,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-import 'package:material_ui/material_ui.dart' show ThemeMode;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -27,14 +26,11 @@ bool serverConfiguredForOnboarding(String? serverUrl) =>
     serverUrl.isNotEmpty &&
     serverUrl != DBKeys.serverUrl.initial;
 
-/// Seeds only unset onboarding state; new installs default to Dark unless a theme is saved.
+/// Seeds only unset onboarding state.
 Future<void> seedFirstRunPreferences(SharedPreferences prefs) async {
   if (prefs.getBool(DBKeys.onboardingComplete.name) != null) return;
   final configured = serverConfiguredForOnboarding(
     prefs.getString(DBKeys.serverUrl.name),
   );
   await prefs.setBool(DBKeys.onboardingComplete.name, configured);
-  if (!configured && !prefs.containsKey(DBKeys.themeMode.name)) {
-    await prefs.setInt(DBKeys.themeMode.name, ThemeMode.dark.index);
-  }
 }

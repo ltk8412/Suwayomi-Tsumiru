@@ -15,16 +15,12 @@ import 'package:material_ui/material_ui.dart';
 
 import 'constants/app_constants.dart';
 import 'constants/app_sizes.dart';
-import 'constants/app_theme.dart';
 import 'features/auth/presentation/reauth_banner.dart';
 import 'features/notifications/controller/notifications_controller.dart';
 import 'features/notifications/data/background/notification_worker.dart';
 import 'features/notifications/data/local_notification_service.dart';
-import 'features/settings/presentation/appearance/widgets/app_theme_selector/app_theme_providers.dart';
-import 'features/settings/presentation/appearance/widgets/is_true_black/is_true_black_tile.dart';
 import 'features/settings/presentation/general/widgets/force_portrait_tile.dart';
 import 'features/settings/presentation/incognito/incognito_mode.dart';
-import 'features/settings/widgets/app_theme_mode_tile/app_theme_mode_tile.dart';
 import 'global_providers/global_providers.dart';
 import 'l10n/generated/app_localizations.dart';
 import 'routes/router_config.dart';
@@ -32,7 +28,6 @@ import 'utils/extensions/custom_extensions.dart';
 import 'utils/launch_url_in_web.dart';
 import 'utils/misc/toast/toast.dart';
 import 'utils/motion/reduce_motion.dart';
-import 'utils/platform/eink/eink_mode_providers.dart';
 import 'utils/theme/app_theme_builder.dart';
 import 'widgets/app_progress.dart';
 import 'widgets/desktop/desktop_page_frame.dart';
@@ -104,16 +99,7 @@ class TsumiruApp extends HookConsumerWidget {
       return null;
     }, const []);
 
-    final einkActive = ref.watch(einkActiveProvider);
-    final themeMode = einkActive
-        ? ThemeMode.light
-        : ref.watch(appThemeModeProvider);
     final appLocale = ref.watch(l10nProvider);
-    final appTheme = einkActive
-        ? AppTheme.einkPaper
-        : ref.watch(appThemeKeyProvider) ?? AppTheme.indigoNight;
-    final customSeed = ref.watch(customThemeColorProvider);
-    final isTrueBlack = ref.watch(isTrueBlackProvider).ifNull();
     applyForcePortrait(ref.watch(forcePortraitProvider).ifNull());
     return MaterialApp.router(
       builder: (context, child) {
@@ -153,19 +139,8 @@ class TsumiruApp extends HookConsumerWidget {
       },
       title: kAppName,
       debugShowCheckedModeBanner: false,
-      theme: buildAppTheme(
-        theme: appTheme,
-        brightness: Brightness.light,
-        customSeed: Color(customSeed ?? 0xFF7C7BFF),
-        amoled: false,
-      ),
-      darkTheme: buildAppTheme(
-        theme: appTheme,
-        brightness: Brightness.dark,
-        customSeed: Color(customSeed ?? 0xFF7C7BFF),
-        amoled: isTrueBlack,
-      ),
-      themeMode: themeMode ?? ThemeMode.system,
+      theme: buildAppTheme(brightness: Brightness.light),
+      themeMode: ThemeMode.light,
       scrollBehavior: const AppScrollBehavior(),
       localizationsDelegates: const [
         AppLocalizations.delegate,
@@ -184,24 +159,8 @@ class AccountSessionLoading extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final einkActive = ref.watch(einkActiveProvider);
-    final mode = einkActive
-        ? ThemeMode.light
-        : ref.watch(appThemeModeProvider) ?? ThemeMode.system;
-    final brightness = switch (mode) {
-      ThemeMode.dark => Brightness.dark,
-      ThemeMode.light => Brightness.light,
-      ThemeMode.system => MediaQuery.platformBrightnessOf(context),
-    };
     return Theme(
-      data: buildAppTheme(
-        theme: einkActive
-            ? AppTheme.einkPaper
-            : ref.watch(appThemeKeyProvider) ?? AppTheme.indigoNight,
-        brightness: brightness,
-        customSeed: Color(ref.watch(customThemeColorProvider) ?? 0xFF7C7BFF),
-        amoled: ref.watch(isTrueBlackProvider).ifNull(),
-      ),
+      data: buildAppTheme(brightness: Brightness.light),
       child: const Directionality(
         textDirection: TextDirection.ltr,
         child: Material(child: Center(child: AppCircularProgress())),

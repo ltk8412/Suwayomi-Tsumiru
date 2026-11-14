@@ -6,7 +6,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tsumiru/src/constants/app_theme.dart';
 import 'package:tsumiru/src/features/account/domain/account_binding.dart';
 import 'package:tsumiru/src/features/auth/data/auth_credentials_store.dart';
 import 'package:tsumiru/src/features/manga_book/data/recommendations/recommendation_provider.dart';
@@ -138,12 +137,7 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: MaterialApp(
-          theme: buildAppTheme(
-            theme: AppTheme.indigoNight,
-            brightness: Brightness.dark,
-            customSeed: const Color(0xFF7C7BFF),
-            amoled: false,
-          ),
+          theme: buildAppTheme(brightness: Brightness.dark),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => MediaQuery(

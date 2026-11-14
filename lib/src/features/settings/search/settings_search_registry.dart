@@ -11,7 +11,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../constants/app_distribution.dart';
-import '../../../constants/app_theme.dart';
 import '../../../constants/enum.dart';
 import '../../../graphql/__generated__/schema.graphql.dart';
 import '../../../routes/router_config.dart';
@@ -24,7 +23,6 @@ import '../../notifications/controller/notification_settings_providers.dart';
 import '../../offline/data/background/catchup_settings.dart';
 import '../../offline/data/offline_repository.dart';
 import '../controller/server_controller.dart';
-import '../presentation/appearance/widgets/app_theme_selector/app_theme_providers.dart';
 import '../presentation/appearance/widgets/show_recommendations/show_recommendations_tile.dart';
 import '../presentation/backup/data/backup_settings_repository.dart';
 import '../presentation/backup/widgets/backup_flags/backup_flags_dialog.dart';
@@ -48,7 +46,6 @@ import '../presentation/server/widget/sign_in/data/sign_in_repository.dart';
 import '../presentation/server/widget/sign_in/sign_in_section.dart';
 import '../presentation/server/widget/webview/data/webview_repository.dart';
 import '../presentation/syncyomi/data/syncyomi_settings_provider.dart';
-import '../widgets/app_theme_mode_tile/app_theme_mode_tile.dart';
 import 'settings_search_entry.dart';
 
 export 'settings_highlight_target.dart';
@@ -110,41 +107,11 @@ List<SettingsSearchEntry> get appearanceSettingsSearchEntries => [
     visible: (_, _) => true,
   ),
   SettingsSearchEntry(
-    id: 'appThemeMode',
-    title: (l) => l.appTheme,
-    breadcrumb: (l) => l.appearance,
-    open: (c) =>
-        const AppearanceSettingsRoute(highlight: 'appThemeMode').push(c),
-    visible: (_, _) => true,
-  ),
-  SettingsSearchEntry(
     id: 'einkMode',
     title: (l) => l.einkMode,
     breadcrumb: (l) => l.appearance,
     open: (c) => const AppearanceSettingsRoute(highlight: 'einkMode').push(c),
     visible: (_, _) => true,
-  ),
-  SettingsSearchEntry(
-    id: 'pureBlack',
-    title: (l) => l.pureBlackAmoled,
-    breadcrumb: (l) => l.appearance,
-    open: (c) => const AppearanceSettingsRoute(highlight: 'pureBlack').push(c),
-    visible: (ref, _) => ref.watch(appThemeModeProvider) != ThemeMode.light,
-  ),
-  SettingsSearchEntry(
-    id: 'theme',
-    title: (l) => l.appThemeTitle,
-    breadcrumb: (l) => '${l.appearance} › ${l.appThemeTitle}',
-    open: (c) => const AppearanceSettingsRoute(highlight: 'theme').push(c),
-    visible: (_, _) => true,
-  ),
-  SettingsSearchEntry(
-    id: 'customColor',
-    title: (l) => l.customColor,
-    breadcrumb: (l) => '${l.appearance} › ${l.appThemeTitle}',
-    open: (c) =>
-        const AppearanceSettingsRoute(highlight: 'customColor').push(c),
-    visible: (ref, _) => ref.watch(appThemeKeyProvider) == AppTheme.custom,
   ),
   SettingsSearchEntry(
     id: 'mangaGridSize',
