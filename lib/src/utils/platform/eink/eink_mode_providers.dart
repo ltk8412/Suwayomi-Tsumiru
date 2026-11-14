@@ -10,6 +10,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../constants/db_keys.dart';
 import '../../extensions/custom_extensions.dart';
 import '../../mixin/shared_preferences_client_mixin.dart';
+import 'epd_refresh.dart';
 
 part 'eink_mode_providers.g.dart';
 
@@ -24,6 +25,25 @@ class EinkSuggestionDismissed extends _$EinkSuggestionDismissed
     with SharedPreferenceClientMixin<bool> {
   @override
   bool? build() => initialize(DBKeys.einkSuggestionDismissed);
+}
+
+/// Whether the native EPD refresh probe succeeded; persisted after the first
+/// probe so launches never re-probe. Null until probed.
+@riverpod
+class NativeRefreshAvailable extends _$NativeRefreshAvailable
+    with SharedPreferenceClientMixin<bool> {
+  @override
+  bool? build() => initialize(DBKeys.einkNativeRefreshAvailable);
+}
+
+/// Probes once (or returns the persisted outcome) and reports whether native
+/// EPD refresh works on this device.
+Future<bool> ensureNativeRefreshProbed(ProviderContainer container) async {
+  final cached = container.read(nativeRefreshAvailableProvider);
+  if (cached != null) return cached;
+  final available = await triggerNativeRefresh();
+  container.read(nativeRefreshAvailableProvider.notifier).update(available);
+  return available;
 }
 
 /// The single switch: on applies the preset; off leaves applied values in place.

@@ -11,6 +11,7 @@ import android.graphics.Color
 import android.graphics.ImageDecoder
 import android.graphics.Rect
 import android.os.Build
+import android.util.Log
 import android.view.WindowManager
 import androidx.core.content.FileProvider
 import io.flutter.embedding.engine.FlutterEngine
@@ -212,22 +213,24 @@ class MainActivity: FlutterAndroidVolumeKeydownActivity() {
             }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "tsumiru/eink")
             .setMethodCallHandler { call, result ->
-                if (call.method != "deviceInfo") {
-                    result.notImplemented()
-                    return@setMethodCallHandler
+                when (call.method) {
+                    "deviceInfo" -> {
+                        val socManufacturer = try {
+                            Class.forName("android.os.SystemProperties")
+                                .getMethod("get", String::class.java)
+                                .invoke(null, "ro.soc.manufacturer") as? String
+                        } catch (_: Throwable) {
+                            null
+                        }
+                        result.success(mapOf(
+                            "model" to Build.MODEL,
+                            "manufacturer" to Build.MANUFACTURER,
+                            "socManufacturer" to socManufacturer,
+                        ))
+                    }
+                    "refreshScreen" -> result.success(probeEpdRefresh())
+                    else -> result.notImplemented()
                 }
-                val socManufacturer = try {
-                    Class.forName("android.os.SystemProperties")
-                        .getMethod("get", String::class.java)
-                        .invoke(null, "ro.soc.manufacturer") as? String
-                } catch (_: Throwable) {
-                    null
-                }
-                result.success(mapOf(
-                    "model" to Build.MODEL,
-                    "manufacturer" to Build.MANUFACTURER,
-                    "socManufacturer" to socManufacturer,
-                ))
             }
     }
 
@@ -246,5 +249,41 @@ class MainActivity: FlutterAndroidVolumeKeydownActivity() {
         canvas.drawColor(Color.WHITE)
         canvas.drawBitmap(bitmap, 0f, 0f, null)
         return flat
+    }
+
+    /**
+     * Reflection-probes vendor-patched EPD refresh APIs on android.view.View.
+     * Meebook/Boyue (Rockchip) devices expose requestEpdMode(EPD_FULL, true).
+     * Every step is guarded: false is a soft no-op on non-e-ink hardware.
+     */
+    private fun probeEpdRefresh(): Boolean {
+        return try {
+            val viewClass = android.view.View::class.java
+            var epdFull = -1
+            for (name in listOf("EPD_FULL", "EPD_FULL_SCREEN", "EPD_GC16")) {
+                try {
+                    epdFull = viewClass.getField(name).getInt(null)
+                    break
+                } catch (_: Throwable) {
+                    // try the next constant name
+                }
+            }
+            if (epdFull < 0) {
+                Log.i("EinkRefresh", "no EPD_FULL constant on android.view.View")
+                return false
+            }
+            val method = viewClass.getMethod(
+                "requestEpdMode",
+                Int::class.javaPrimitiveType,
+                Boolean::class.javaPrimitiveType,
+            )
+            // MethodChannel handlers run on the platform main thread.
+            method.invoke(window.decorView, epdFull, true)
+            Log.i("EinkRefresh", "requestEpdMode($epdFull, true) invoked")
+            true
+        } catch (e: Throwable) {
+            Log.i("EinkRefresh", "requestEpdMode unavailable: ${e.javaClass.simpleName}")
+            false
+        }
     }
 }

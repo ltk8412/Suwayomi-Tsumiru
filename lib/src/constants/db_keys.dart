@@ -262,7 +262,10 @@ enum DBKeys {
   // Single toggle that applies e-ink settings, forces the e-ink theme and
   // disables the settings it manages while on.
   einkMode(false),
-  einkSuggestionDismissed(false);
+  einkSuggestionDismissed(false),
+  // Null until the first reflection probe; then persists success/failure so
+  // launches never re-probe.
+  einkNativeRefreshAvailable(null);
 
   const DBKeys(this.initial);
 

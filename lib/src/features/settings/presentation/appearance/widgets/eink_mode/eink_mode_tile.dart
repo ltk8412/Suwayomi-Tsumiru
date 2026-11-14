@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+import 'dart:async';
+
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -23,7 +25,7 @@ class EinkModeSwitchTile extends HookConsumerWidget {
       subtitle: Text(context.l10n.einkModeSubtitle),
       onChanged: (value) {
         ref.read(einkModeProvider.notifier).update(value);
-        if (value) applyEinkSettingsPreset(ref);
+        if (value) unawaited(applyEinkSettingsPreset(context));
       },
       value: ref.watch(einkModeProvider).ifNull(false),
     );
