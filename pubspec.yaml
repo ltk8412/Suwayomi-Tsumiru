@@ -128,11 +128,11 @@ flutter:
           weight: 700
 
 flutter_native_splash:
-  color: "#0b0d1a"
+  color: "#ffffff"
   image: assets/icons/launcher/splash_icon.png
   android_12:
-    color: "#0b0d1a"
-    icon_background_color: "#0b0d1a"
+    color: "#ffffff"
+    icon_background_color: "#ffffff"
     image: assets/icons/launcher/splash_icon.png
 
 flutter_launcher_icons:
@@ -147,8 +147,8 @@ flutter_launcher_icons:
   web:
     generate: true
     image_path: "assets/icons/launcher/tsumiru_icon.png"
-    background_color: "#02061D"
-    theme_color: "#7c7bff"
+    background_color: "#FFFFFF"
+    theme_color: "#000000"
   windows:
     generate: true
     image_path: "assets/icons/launcher/tsumiru_icon_rounded.png"

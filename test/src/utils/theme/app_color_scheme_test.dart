@@ -6,37 +6,19 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:tsumiru/src/constants/app_theme.dart';
 import 'package:tsumiru/src/utils/theme/app_color_scheme.dart';
 import 'package:tsumiru/src/utils/theme/theme_tokens.dart';
 
 void main() {
-  ColorScheme darkScheme(AppTheme theme) =>
-      schemeFromTokens(tokensFor(theme, Brightness.dark), Brightness.dark);
-
-  test('Monochrome dark: onPrimary is dark against its light-grey accent, and '
-      'every dark theme contrasts', () {
-    final scheme = darkScheme(AppTheme.mono);
-    // The accent is a near-white grey, so white text was illegible (#105).
-    expect(
-      scheme.primary.computeLuminance(),
-      greaterThan(0.5),
-      reason: 'the Monochrome accent should be light',
+  test('eink dark scheme contrasts primary against onPrimary', () {
+    final scheme = schemeFromTokens(
+      tokensFor(Brightness.dark),
+      Brightness.dark,
     );
-    expect(scheme.onPrimary, const Color(0xFF0A0A12));
-
-    for (final theme in AppTheme.values) {
-      if (theme == AppTheme.custom) continue; // custom is ColorScheme.fromSeed
-      final dark = darkScheme(theme);
-      final contrast =
-          (dark.primary.computeLuminance() -
-                  dark.onPrimary.computeLuminance())
-              .abs();
-      expect(
-        contrast,
-        greaterThan(0.3),
-        reason: '$theme: primary/onPrimary too close ($contrast)',
-      );
-    }
+    final contrast =
+        (scheme.primary.computeLuminance() -
+                scheme.onPrimary.computeLuminance())
+            .abs();
+    expect(contrast, greaterThan(0.3));
   });
 }

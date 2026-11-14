@@ -1,12 +1,18 @@
 <p align="center">
  <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/icons/dark_icon.png">
-  <source media="(prefers-color-scheme: light)" srcset="assets/icons/logo_on_light.png">
-  <img width=120px height=120px src="assets/icons/dark_icon.png" alt="Tsumiru logo"/>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/icons/logo_eink.png">
+  <source media="(prefers-color-scheme: light)" srcset="assets/icons/logo_eink.png">
+  <img width=120px height=120px src="assets/icons/logo_eink.png" alt="Tsumiru e-ink logo"/>
  </picture>
 </p>
 
-<h1 align="center">Tsumiru</h1>
+<h1 align="center">Tsumiru-Eink</h1>
+
+> **⚠️ Dedicated e-ink fork.** Tsumiru-Eink is a fork of
+> [Tsumiru](https://github.com/Suwayomi/Suwayomi-Tsumiru), optimized for e-ink
+> readers (Meebook M103, Onyx Boox, Hisense, Bigme, …): a monochrome
+> paper-white theme, no animations / transparency / shadows, paged reading, and
+> native EPD full refresh on supported devices.
 
 <div align="center">
 
@@ -18,7 +24,7 @@
 
 </div>
 
-<p align="center">A manga and webtoon reader for your Suwayomi server</p>
+<p align="center">A manga reader for your Suwayomi server, tuned for e-ink devices</p>
 
 > *Tsumiru* (積みる) takes the 積, "pile up", from *tsundoku* (積ん読), the Japanese habit of buying books faster than you can read them. It swaps the "read" for *miru*, "to look".
 

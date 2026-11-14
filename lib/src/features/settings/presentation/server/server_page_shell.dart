@@ -10,6 +10,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../../../graphql/__generated__/schema.graphql.dart';
 import '../../../../utils/extensions/custom_extensions.dart';
 import '../../../../utils/network/graphql_errors.dart';
+import '../../../../widgets/app_progress.dart';
 import '../../../../widgets/desktop/desktop_top_bar.dart';
 import '../../../../widgets/server_unreachable_view.dart';
 import '../../../../widgets/shell/detail_navigation_shell_screen.dart';
@@ -90,7 +91,7 @@ class ServerSettingsPageShell extends ConsumerWidget {
                     if (serverSettings.isLoading && !serverSettings.hasValue)
                       const Padding(
                         padding: EdgeInsets.all(24),
-                        child: Center(child: CircularProgressIndicator()),
+                        child: Center(child: AppCircularProgress()),
                       ),
                     if (serverSettings.hasError && !serverSettings.hasValue)
                       Builder(

@@ -14,6 +14,7 @@ import '../../../../utils/extensions/custom_extensions.dart';
 import '../../../../utils/misc/app_utils.dart';
 import '../../../../utils/misc/toast/toast.dart';
 import '../../../../utils/motion/reduce_motion.dart';
+import '../../../../widgets/app_progress.dart';
 import '../../../../widgets/server_image.dart';
 import '../../controller/manga_track_records_controller.dart';
 import '../../data/graphql/__generated__/query.graphql.dart';
@@ -71,7 +72,7 @@ class TrackSheetContent extends ConsumerWidget {
     if (!trackersAsync.hasValue || !recordsAsync.hasValue) {
       return const SizedBox(
         height: 200,
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(child: AppCircularProgress()),
       );
     }
 

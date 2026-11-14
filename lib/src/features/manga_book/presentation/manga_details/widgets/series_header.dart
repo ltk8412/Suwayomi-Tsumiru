@@ -344,7 +344,7 @@ class SeriesHeaderPill extends HookWidget {
           border: gradient
               ? null
               : Border.all(color: cs.primary.withValues(alpha: .45)),
-          boxShadow: gradient
+          boxShadow: gradient && !brand.flat
               ? [
                   BoxShadow(
                     color: cs.secondary.withValues(

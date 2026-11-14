@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../utils/extensions/custom_extensions.dart';
 import '../../../utils/network/graphql_errors.dart';
+import '../../../widgets/app_progress.dart';
 
 enum AccountCodeMode { registration, recovery }
 
@@ -153,7 +154,7 @@ class AccountCodeDialog extends HookWidget {
                   error.value!,
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
-              if (busy.value) const LinearProgressIndicator(),
+              if (busy.value) const AppLinearProgress(),
             ],
           ),
         ),

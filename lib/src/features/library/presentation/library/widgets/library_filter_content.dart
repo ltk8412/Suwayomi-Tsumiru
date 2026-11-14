@@ -15,6 +15,7 @@ import '../../../../../constants/enum.dart';
 import '../../../../../utils/extensions/custom_extensions.dart';
 import '../../../../../utils/motion/reduce_motion.dart';
 import '../../../../../utils/theme/brand.dart';
+import '../../../../../widgets/app_progress.dart';
 import '../../../../../widgets/fluent_expansion_tile.dart';
 import '../../../../manga_book/domain/manga/manga_model.dart';
 import '../../../../tracking/data/tracker_repository.dart';
@@ -657,7 +658,7 @@ class _TagListView extends StatelessWidget {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(12),
-          child: CircularProgressIndicator(),
+          child: AppCircularProgress(),
         ),
       );
     }
@@ -771,7 +772,7 @@ class CategoryFilterDialog extends ConsumerWidget {
       content: SizedBox(
         width: double.maxFinite,
         child: categories.isEmpty
-            ? const Center(child: CircularProgressIndicator())
+            ? const Center(child: AppCircularProgress())
             : ListView.builder(
                 shrinkWrap: true,
                 itemCount: categories.length,

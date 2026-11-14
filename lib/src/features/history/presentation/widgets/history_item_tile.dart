@@ -15,6 +15,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../../../routes/router_config.dart';
 import '../../../../utils/extensions/custom_extensions.dart';
 import '../../../../utils/motion/reduce_motion.dart';
+import '../../../../widgets/app_progress.dart';
 import '../../../../widgets/desktop/desktop_page_frame.dart';
 import '../../../../widgets/server_image.dart';
 import '../../../../widgets/web_route_link.dart';
@@ -357,11 +358,11 @@ class _ProgressLine extends StatelessWidget {
           width: 120,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(2),
-            child: LinearProgressIndicator(
+            child: AppLinearProgress(
               value: item.user.lastPageRead / item.pageCount,
               minHeight: 3,
               backgroundColor: scheme.surfaceContainerHighest,
-              valueColor: AlwaysStoppedAnimation<Color>(scheme.primary),
+              color: scheme.primary,
             ),
           ),
         ),

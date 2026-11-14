@@ -99,7 +99,7 @@ enum DBKeys {
   gridMangaCoverMinWidth(128.0),
   readerOverlay(false),
   readerFeedbackToasts(true),
-  volumeTap(false),
+  volumeTap(true),
   volumeTapInvert(false),
   keepScreenOn(false),
   hideEmptyCategory(false),
@@ -108,7 +108,7 @@ enum DBKeys {
   refreshChaptersFromSource(false),
   pinchToZoom(true),
   readerIgnoreSafeArea(true),
-  appTheme(AppTheme.indigoNight),
+  appTheme(AppTheme.einkPaper),
   customThemeColor(0xFF7C7BFF),
   historyEnabled(true),
   historyRetentionDays(90),
@@ -223,7 +223,7 @@ enum DBKeys {
   showTapZonesOverlay(false),
   // One-time tap-zone preview; clears itself after display.
   tapZonesOverlayUnseen(true),
-  animatePageTransitions(true),
+  animatePageTransitions(false),
   dualPageSplitPaged(false),
   dualPageInvertPaged(false),
   rotateWidePages(false),
@@ -238,7 +238,7 @@ enum DBKeys {
   readerScrollAmount(ReaderScrollAmount.large),
   autoScrollIntervalSeconds(3),
   autoAdvanceIntervalSeconds(5),
-  readerBackgroundColor(ReaderBackgroundColor.black),
+  readerBackgroundColor(ReaderBackgroundColor.white),
   showPageNumber(true),
   landscapeVerticalSeekbar(false),
   readerFullscreen(true),
@@ -258,7 +258,14 @@ enum DBKeys {
   colorFilterValue(0),
   colorFilterBlendMode(ColorFilterBlendMode.defaultBlend),
   grayscale(false),
-  invertedColors(false);
+  invertedColors(false),
+  // Single toggle that applies e-ink settings, forces the e-ink theme and
+  // disables the settings it manages while on.
+  einkMode(false),
+  einkSuggestionDismissed(false),
+  // Null until the first reflection probe; then persists success/failure so
+  // launches never re-probe.
+  einkNativeRefreshAvailable(null);
 
   const DBKeys(this.initial);
 

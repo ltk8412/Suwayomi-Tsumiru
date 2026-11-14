@@ -15,6 +15,7 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../../../../routes/router_config.dart';
 import '../../../../utils/extensions/custom_extensions.dart';
 import '../../../../utils/motion/reduce_motion.dart';
+import '../../../../widgets/app_progress.dart';
 import '../../../../widgets/custom_circular_progress_indicator.dart';
 import '../../../../widgets/desktop/desktop_window.dart';
 import '../../../../widgets/emoticons.dart';
@@ -302,7 +303,7 @@ class UpcomingScreen extends HookConsumerWidget {
             ),
           ),
         controls,
-        if (past.isLoading) const LinearProgressIndicator(),
+        if (past.isLoading) const AppLinearProgress(),
         if (past.hasError)
           InlineRetryRow(
             message: past.error.toString(),

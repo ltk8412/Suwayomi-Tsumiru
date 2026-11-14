@@ -19,6 +19,7 @@ import '../../../../../constants/enum.dart';
 import '../../../../../routes/router_config.dart';
 import '../../../../../utils/extensions/custom_extensions.dart';
 import '../../../../../utils/motion/reduce_motion.dart';
+import '../../../../../widgets/app_progress.dart';
 import '../../../../../widgets/desktop/desktop_page_frame.dart';
 import '../../../../../widgets/web_route_link.dart';
 import '../../../../offline/presentation/offline_save_button.dart';
@@ -507,11 +508,11 @@ class ChapterListTile extends HookConsumerWidget {
                             chapter.pageCount,
                           ),
                           child: ClipRect(
-                            child: LinearProgressIndicator(
+                            child: AppLinearProgress(
                               value: progress,
                               minHeight: 3,
                               backgroundColor: cs.surfaceContainerHighest,
-                              valueColor: AlwaysStoppedAnimation(cs.primary),
+                              color: cs.primary,
                             ),
                           ),
                         ),

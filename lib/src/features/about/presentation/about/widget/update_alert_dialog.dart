@@ -6,6 +6,7 @@ import '../../../../../graphql/__generated__/schema.graphql.dart';
 import '../../../../../utils/extensions/custom_extensions.dart';
 import '../../../../../utils/launch_url_in_web.dart';
 import '../../../../../utils/misc/toast/toast.dart';
+import '../../../../../widgets/app_progress.dart';
 import '../../../../settings/presentation/server/data/web_interface_installer.dart';
 import '../../../../settings/presentation/server/data/web_interface_repository.dart';
 import '../../../data/about_repository.dart';
@@ -88,7 +89,7 @@ class _UpdateAlertDialogState extends ConsumerState<UpdateAlertDialog> {
       children: [
         Text(widget.info),
         if (_installing)
-          LinearProgressIndicator(value: _progress.clamp(0, 100) / 100),
+          AppLinearProgress(value: _progress.clamp(0, 100) / 100),
       ],
     ),
     actions: [

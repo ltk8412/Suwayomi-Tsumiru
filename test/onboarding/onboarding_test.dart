@@ -6,7 +6,6 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:material_ui/material_ui.dart' show ThemeMode;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tsumiru/src/features/onboarding/data/onboarding_complete.dart';
 import 'package:tsumiru/src/global_providers/global_providers.dart';
@@ -29,7 +28,7 @@ void main() {
     return sp;
   }
 
-  test('first-run completion predicate and Dark theme seed', () async {
+  test('first-run completion predicate', () async {
     // Migration predicate: unset / empty / default loopback are not configured.
     expect(serverConfiguredForOnboarding(null), isFalse);
     expect(serverConfiguredForOnboarding(''), isFalse);
@@ -39,13 +38,8 @@ void main() {
     final c = await _container({});
     expect(c.read(onboardingCompleteProvider) ?? false, isFalse);
 
-    // A fresh install starts onboarding in Dark.
-    var sp = await seeded({});
+    // A fresh install seeds the onboarding-complete flag only.
+    final sp = await seeded({});
     expect(sp.getBool('onboardingComplete'), isFalse);
-    expect(sp.getInt('themeMode'), ThemeMode.dark.index);
-
-    // A saved mode is never overwritten.
-    sp = await seeded({'themeMode': ThemeMode.light.index});
-    expect(sp.getInt('themeMode'), ThemeMode.light.index);
   });
 }

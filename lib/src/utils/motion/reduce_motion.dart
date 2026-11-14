@@ -6,18 +6,8 @@
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'reduce_motion.g.dart';
-
-/// App-requested reduced motion, in addition to the OS "Remove animations" flag.
-@riverpod
-class AppReduceMotion extends _$AppReduceMotion {
-  @override
-  bool build() => false;
-
-  void set(bool value) => state = value;
-}
+import '../platform/eink/eink_mode_providers.dart';
 
 extension ReduceMotionContext on BuildContext {
   bool get reduceMotion => MediaQuery.disableAnimationsOf(this);
@@ -35,7 +25,7 @@ extension ReduceMotionContext on BuildContext {
       : null;
 }
 
-/// Always mounted so changing reduced motion never remounts the subtree.
+/// Always mounted; the fork is always in reduced motion.
 class ReduceMotionScope extends ConsumerWidget {
   const ReduceMotionScope({super.key, required this.child});
 
@@ -45,7 +35,7 @@ class ReduceMotionScope extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final reduce =
         MediaQuery.disableAnimationsOf(context) ||
-        ref.watch(appReduceMotionProvider);
+        ref.watch(einkActiveProvider);
     final theme = Theme.of(context);
     return MediaQuery(
       data: MediaQuery.of(context).copyWith(disableAnimations: reduce),

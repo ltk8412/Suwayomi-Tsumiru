@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:tsumiru/src/constants/app_theme.dart';
 import 'package:tsumiru/src/utils/theme/app_color_scheme.dart';
 import 'package:tsumiru/src/utils/theme/app_theme_builder.dart';
 import 'package:tsumiru/src/utils/theme/brand.dart';
@@ -31,77 +30,57 @@ void _expectRatio(Color a, Color b, double minimum, String what) {
 }
 
 void main() {
-  for (final theme in AppTheme.values.where((t) => t != AppTheme.custom)) {
-    test('${theme.name} light scheme meets WCAG contrast', () {
-      final tokens = tokensFor(theme, Brightness.light);
-      final s = schemeFromTokens(tokens, Brightness.light);
+  test('einkPaper light scheme meets WCAG contrast', () {
+    final tokens = tokensFor(Brightness.light);
+    final s = schemeFromTokens(tokens, Brightness.light);
 
-      _expectRatio(s.onSurface, s.surface, 7.0, 'onSurface/surface');
-      _expectRatio(
-        s.onSurfaceVariant,
-        s.surface,
-        4.5,
-        'onSurfaceVariant/surface',
-      );
-      _expectRatio(
-        s.onSurfaceVariant,
-        s.surfaceContainer,
-        4.5,
-        'onSurfaceVariant/surfaceContainer',
-      );
-      _expectRatio(s.primary, s.surface, 4.5, 'primary/surface');
-      _expectRatio(
-        s.primary,
-        s.surfaceContainer,
-        4.5,
-        'primary/surfaceContainer',
-      );
-      _expectRatio(s.onPrimary, s.primary, 4.5, 'onPrimary/primary');
-      _expectRatio(
-        s.onSecondaryContainer,
-        s.secondaryContainer,
-        4.5,
-        'onSecondaryContainer/secondaryContainer',
-      );
-      _expectRatio(s.error, s.surface, 4.5, 'error/surface');
-      _expectRatio(s.outline, s.surface, 3.0, 'outline/surface');
+    _expectRatio(s.onSurface, s.surface, 7.0, 'onSurface/surface');
+    _expectRatio(
+      s.onSurfaceVariant,
+      s.surface,
+      4.5,
+      'onSurfaceVariant/surface',
+    );
+    _expectRatio(
+      s.onSurfaceVariant,
+      s.surfaceContainer,
+      4.5,
+      'onSurfaceVariant/surfaceContainer',
+    );
+    _expectRatio(s.primary, s.surface, 4.5, 'primary/surface');
+    _expectRatio(
+      s.primary,
+      s.surfaceContainer,
+      4.5,
+      'primary/surfaceContainer',
+    );
+    _expectRatio(s.onPrimary, s.primary, 4.5, 'onPrimary/primary');
+    _expectRatio(
+      s.onSecondaryContainer,
+      s.secondaryContainer,
+      4.5,
+      'onSecondaryContainer/secondaryContainer',
+    );
+    _expectRatio(s.error, s.surface, 4.5, 'error/surface');
+    _expectRatio(s.outline, s.surface, 3.0, 'outline/surface');
 
-      final onAccent = tokens.onAccent!;
-      for (final stop in tokens.grad!.colors) {
-        _expectRatio(onAccent, stop, 4.5, 'onAccent/$stop (grad stop)');
-      }
-    });
-  }
+    final onAccent = tokens.onAccent!;
+    for (final stop in tokens.grad!.colors) {
+      _expectRatio(onAccent, stop, 4.5, 'onAccent/$stop (grad stop)');
+    }
+  });
 
   test('dark selected states meet WCAG contrast', () {
-    final themes = {
-      for (final theme in AppTheme.values.where((t) => t != AppTheme.custom))
-        theme.name: buildAppTheme(
-          theme: theme,
-          brightness: Brightness.dark,
-          customSeed: const Color(0xFF7C7BFF),
-          amoled: false,
-        ),
-      for (final seed in [0xFF7C7BFF, 0xFFFF0000, 0xFF00FF00])
-        'custom ${seed.toRadixString(16)}': buildAppTheme(
-          theme: AppTheme.custom,
-          brightness: Brightness.dark,
-          customSeed: Color(seed),
-          amoled: false,
-        ),
-    };
+    final theme = buildAppTheme(brightness: Brightness.dark);
+    final s = theme.colorScheme;
+    final fill = theme.extension<BrandColors>()!.navSelectedFill!;
 
-    themes.forEach((name, theme) {
-      final s = theme.colorScheme;
-      final fill = theme.extension<BrandColors>()!.navSelectedFill!;
-
-      expect(
-        contrastRatio(s.primary, s.surface),
-        greaterThanOrEqualTo(contrastRatio(s.onSurfaceVariant, s.surface)),
-        reason: '$name: primary/surface below onSurfaceVariant/surface',
-      );
-      _expectRatio(s.onPrimary, s.primary, 4.5, '$name: onPrimary/primary');
-      _expectRatio(s.onSurface, fill, 7.0, '$name: onSurface/accentFill');
-    });
+    expect(
+      contrastRatio(s.primary, s.surface),
+      greaterThanOrEqualTo(contrastRatio(s.onSurfaceVariant, s.surface)),
+      reason: 'primary/surface below onSurfaceVariant/surface',
+    );
+    _expectRatio(s.onPrimary, s.primary, 4.5, 'onPrimary/primary');
+    _expectRatio(s.onSurface, fill, 7.0, 'onSurface/accentFill');
   });
 }

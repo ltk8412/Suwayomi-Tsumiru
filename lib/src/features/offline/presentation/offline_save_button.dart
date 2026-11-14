@@ -12,6 +12,7 @@ import '../../../graphql/__generated__/schema.graphql.dart';
 import '../../../utils/extensions/custom_extensions.dart';
 import '../../../utils/motion/reduce_motion.dart';
 import '../../../utils/network/graphql_errors.dart';
+import '../../../widgets/app_progress.dart';
 import '../../../widgets/custom_circular_progress_indicator.dart';
 import '../../account/data/account_providers.dart';
 import '../data/offline_database.dart';
@@ -143,7 +144,7 @@ class _DownloadingIndicator extends ConsumerWidget {
       child: Center(
         child: SizedBox.square(
           dimension: resolveIconButtonIconSize(context),
-          child: CircularProgressIndicator(strokeWidth: 2, value: value),
+          child: AppCircularProgress(strokeWidth: 2, value: value),
         ),
       ),
     );

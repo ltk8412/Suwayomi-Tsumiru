@@ -15,6 +15,7 @@ import '../../../../../routes/router_config.dart';
 import '../../../../../utils/extensions/custom_extensions.dart';
 import '../../../../../utils/misc/toast/toast.dart';
 import '../../../../../utils/motion/reduce_motion.dart';
+import '../../../../../widgets/app_progress.dart';
 import '../../../../../widgets/desktop/desktop_page_frame.dart';
 import '../../../../../widgets/popup_widgets/confirm_action.dart';
 import '../../../../../widgets/server_image.dart';
@@ -303,7 +304,7 @@ class DownloadProgressListTile extends HookConsumerWidget {
                               padding: const EdgeInsets.only(top: 4),
                               child: SizedBox(
                                 width: 220,
-                                child: LinearProgressIndicator(
+                                child: AppLinearProgress(
                                   minHeight: 4,
                                   value: downloadUpdate.progress,
                                 ),
@@ -439,7 +440,7 @@ class DownloadProgressListTile extends HookConsumerWidget {
           if (isDownloading)
             Padding(
               padding: const EdgeInsets.only(left: 72, right: 16),
-              child: LinearProgressIndicator(
+              child: AppLinearProgress(
                 minHeight: 2,
                 value: downloadUpdate.progress,
               ),

@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../../../../../utils/extensions/custom_extensions.dart';
 import '../../../../../../../utils/hooks/polling_hook.dart';
+import '../../../../../../../widgets/app_progress.dart';
 import '../../../../../domain/settings/settings.dart';
 import '../../../controllers/backup_controller.dart';
 
@@ -42,7 +43,7 @@ class RestoreStatusProgress extends HookConsumerWidget {
     return Stack(
       alignment: Alignment.center,
       children: [
-        CircularProgressIndicator(
+        AppCircularProgress(
           value: restoreStatus != null
               ? ((restoreStatus.mangaProgress).ifNull() /
                   (restoreStatus.totalManga).ifNullOrZero(1))

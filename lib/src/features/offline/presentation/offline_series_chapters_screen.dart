@@ -13,6 +13,7 @@ import '../../../graphql/__generated__/schema.graphql.dart';
 import '../../../routes/router_config.dart';
 import '../../../utils/extensions/custom_extensions.dart';
 import '../../../utils/motion/reduce_motion.dart';
+import '../../../widgets/app_progress.dart';
 import '../../../widgets/emoticons.dart';
 import '../../../widgets/server_image.dart';
 import '../../account/data/account_providers.dart';
@@ -189,7 +190,7 @@ class _ActiveChapterTile extends ConsumerWidget {
           child: SizedBox(
             width: 24,
             height: 24,
-            child: CircularProgressIndicator(
+            child: AppCircularProgress(
               strokeWidth: 2.5,
               value: (progress == null || progress <= 0) ? null : progress,
             ),

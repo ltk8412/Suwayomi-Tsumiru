@@ -2017,6 +2017,30 @@
   "@incognitoShort": {
     "description": "Short Incognito label for the desktop sidebar foot row and its collapsed tooltip"
   },
+  "einkDetectedBanner": "E-ink device detected. Enable E-Ink mode for a better reading experience.",
+  "@einkDetectedBanner": {
+    "description": "Banner suggesting E-Ink mode on detected e-ink hardware"
+  },
+  "einkDismiss": "Dismiss",
+  "@einkDismiss": {
+    "description": "Dismiss action on the e-ink suggestion banner"
+  },
+  "einkEnable": "Enable",
+  "@einkEnable": {
+    "description": "Enable action on the e-ink suggestion banner"
+  },
+  "einkManagedSubtitle": "Managed by E-Ink mode",
+  "@einkManagedSubtitle": {
+    "description": "Subtitle shown on settings that E-Ink mode disables"
+  },
+  "einkMode": "E-Ink mode",
+  "@einkMode": {
+    "description": "Appearance switch that applies e-ink optimizations"
+  },
+  "einkModeSubtitle": "Applies e-ink reader settings, forces a paper-white theme and disables animations. Turning it off leaves the applied values in place.",
+  "@einkModeSubtitle": {
+    "description": "Subtitle of the E-Ink mode switch"
+  },
   "emptyCategory": "Category name can't be empty",
   "enableSocksProxy": "Use SOCKS proxy",
   "enterProp": "Enter {prop}",

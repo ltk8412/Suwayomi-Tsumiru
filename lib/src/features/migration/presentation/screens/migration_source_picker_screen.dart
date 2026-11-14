@@ -13,6 +13,7 @@ import '../../../../constants/app_sizes.dart';
 import '../../../../constants/enum.dart';
 import '../../../../routes/router_config.dart';
 import '../../../../utils/extensions/custom_extensions.dart';
+import '../../../../widgets/app_progress.dart';
 import '../../../../widgets/desktop/desktop_page_frame.dart';
 import '../../../../widgets/desktop/desktop_top_bar.dart';
 import '../../../../widgets/search_field.dart';
@@ -86,7 +87,7 @@ class MigrationSourcePickerBody extends HookConsumerWidget {
         name == id ? l10n.migrationSourceNotInstalled : name;
 
     return groupsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: AppCircularProgress()),
       error: (e, _) => Center(child: Text('$e')),
       data: (all) {
         final q = query.trim().toLowerCase();
@@ -468,7 +469,7 @@ class MigrationSourceMangaScreen extends HookConsumerWidget {
               actions: actions,
             ),
       body: library.isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: AppCircularProgress())
           : visible.isEmpty && q.isNotEmpty
               ? Center(child: Text(l10n.noSearchResults))
               : ListView.builder(

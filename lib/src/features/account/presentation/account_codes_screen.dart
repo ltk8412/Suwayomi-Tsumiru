@@ -10,6 +10,7 @@ import '../../../utils/extensions/custom_extensions.dart';
 import '../../../utils/misc/app_utils.dart';
 import '../../../utils/misc/toast/toast.dart';
 import '../../../utils/motion/reduce_motion.dart';
+import '../../../widgets/app_progress.dart';
 import '../../../widgets/desktop/desktop_top_bar.dart';
 import '../../../widgets/shell/detail_navigation_shell_screen.dart';
 import '../../settings/widgets/settings_group_card/settings_group_card.dart';
@@ -134,7 +135,7 @@ class IssuedAccountCodeDialog extends HookConsumerWidget {
             : Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (busy) const LinearProgressIndicator(),
+                  if (busy) const AppLinearProgress(),
                   if (result.hasError) Text(result.error.toString()),
                   if (result.hasData) ...[
                     Text(context.l10n.accountCodeShownOnce),
@@ -207,7 +208,7 @@ class AccountCodesScreen extends HookConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    if (busy.value) const LinearProgressIndicator(),
+                    if (busy.value) const AppLinearProgress(),
                     Expanded(
                       child: codes!.showUiWhenData(
                         context,

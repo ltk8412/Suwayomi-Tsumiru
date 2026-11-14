@@ -6,6 +6,7 @@ import '../../../../../../graphql/__generated__/schema.graphql.dart';
 import '../../../../../../utils/extensions/custom_extensions.dart';
 import '../../../../../../utils/misc/toast/toast.dart';
 import '../../../../../../utils/motion/reduce_motion.dart';
+import '../../../../../../widgets/app_progress.dart';
 import '../../../../../../widgets/desktop/desktop_top_bar.dart';
 import '../../../../../../widgets/popup_widgets/radio_list_popup.dart';
 import '../../../../../../widgets/shell/detail_navigation_shell_screen.dart';
@@ -170,7 +171,7 @@ class _ImageProcessingScreenState extends ConsumerState<ImageProcessingScreen> {
                   .watch(imagesDownloadSettingsProvider)
                   .when(
                     loading: () =>
-                        const Center(child: CircularProgressIndicator()),
+                        const Center(child: AppCircularProgress()),
                     error: (error, _) => _loadError(context, ref, error),
                     data: (dto) {
                       if (dto == null) return const SizedBox.shrink();
@@ -185,7 +186,7 @@ class _ImageProcessingScreenState extends ConsumerState<ImageProcessingScreen> {
                   .watch(serveConversionsProvider)
                   .when(
                     loading: () =>
-                        const Center(child: CircularProgressIndicator()),
+                        const Center(child: AppCircularProgress()),
                     error: (error, _) => _loadError(context, ref, error),
                     data: (records) {
                       if (records == null) return const SizedBox.shrink();

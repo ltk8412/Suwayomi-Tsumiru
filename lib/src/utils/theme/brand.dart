@@ -30,6 +30,7 @@ class BrandColors extends ThemeExtension<BrandColors> {
     required this.onGradient,
     required this.success,
     this.neutral = false,
+    this.flat = false,
     this.navSelectedFill,
   });
 
@@ -42,6 +43,9 @@ class BrandColors extends ThemeExtension<BrandColors> {
   /// Monochrome light removes hues from genre chips and cover backdrops.
   final bool neutral;
 
+  /// E-ink paper skips decorative glows; gradients are already flat.
+  final bool flat;
+
   final Color? navSelectedFill;
 
   @override
@@ -50,12 +54,14 @@ class BrandColors extends ThemeExtension<BrandColors> {
     Color? onGradient,
     Color? success,
     bool? neutral,
+    bool? flat,
     Color? navSelectedFill,
   }) => BrandColors(
     gradient: gradient ?? this.gradient,
     onGradient: onGradient ?? this.onGradient,
     success: success ?? this.success,
     neutral: neutral ?? this.neutral,
+    flat: flat ?? this.flat,
     navSelectedFill: navSelectedFill ?? this.navSelectedFill,
   );
 
@@ -67,6 +73,7 @@ class BrandColors extends ThemeExtension<BrandColors> {
       onGradient: Color.lerp(onGradient, other.onGradient, t)!,
       success: Color.lerp(success, other.success, t)!,
       neutral: t < 0.5 ? neutral : other.neutral,
+      flat: t < 0.5 ? flat : other.flat,
       navSelectedFill: Color.lerp(navSelectedFill, other.navSelectedFill, t),
     );
   }
@@ -99,8 +106,14 @@ abstract final class OnImage {
 }
 
 /// Shared reader chrome surface; high opacity preserves contrast over white pages.
-Color readerNavSurface(ColorScheme cs) =>
-    cs.surface.withValues(alpha: cs.brightness == Brightness.dark ? 0.9 : 0.95);
+/// Fully opaque in the e-ink paper theme (translucency dithers on e-ink).
+Color readerNavSurface(BuildContext context) {
+  final cs = Theme.of(context).colorScheme;
+  if (BrandColors.of(context).flat) return cs.surface;
+  return cs.surface.withValues(
+    alpha: cs.brightness == Brightness.dark ? 0.9 : 0.95,
+  );
+}
 
 /// Brighten dark-mode text actions only; light mode retains primary contrast.
 Color brandBrightAccent(ColorScheme cs) => cs.brightness == Brightness.light
@@ -178,10 +191,15 @@ class BrandButton extends StatelessWidget {
     final disabled = onPressed == null && !loading;
     return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: disabled ? null : brand.gradient,
-        color: disabled ? cs.onSurface.withValues(alpha: 0.12) : null,
+        gradient: disabled || brand.flat ? null : brand.gradient,
+        color: brand.flat
+            ? cs.surface
+            : disabled
+            ? cs.onSurface.withValues(alpha: 0.12)
+            : null,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: disabled ? null : brandGlow(cs),
+        border: brand.flat ? Border.all(color: cs.onSurface) : null,
+        boxShadow: disabled || brand.flat ? null : brandGlow(cs),
       ),
       child: Material(
         color: Colors.transparent,
@@ -197,14 +215,16 @@ class BrandButton extends StatelessWidget {
                     ? MiniCircularProgressIndicator(
                         size: 16,
                         padding: const EdgeInsets.all(8),
-                        color: brand.onGradient,
+                        color: brand.flat ? cs.onSurface : brand.onGradient,
                       )
                     : _brandRow(
                         context: context,
                         label: label,
                         icon: icon,
                         expand: expand,
-                        content: disabled
+                        content: brand.flat
+                            ? (disabled ? cs.onSurfaceVariant : cs.onSurface)
+                            : disabled
                             ? cs.onSurface.withValues(alpha: 0.38)
                             : null,
                       ),
@@ -236,12 +256,13 @@ class BrandGlassButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final flat = BrandColors.of(context).flat;
     final accent = brandBrightAccent(cs);
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: cs.onSurface.withValues(alpha: 0.05),
+        color: flat ? cs.surface : cs.onSurface.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cs.outlineVariant),
+        border: Border.all(color: flat ? cs.onSurface : cs.outlineVariant),
       ),
       child: Material(
         color: Colors.transparent,
@@ -259,7 +280,9 @@ class BrandGlassButton extends StatelessWidget {
                   icon: icon,
                   expand: expand,
                   content: onPressed == null
-                      ? cs.onSurface.withValues(alpha: 0.38)
+                      ? (flat
+                            ? cs.onSurfaceVariant
+                            : cs.onSurface.withValues(alpha: 0.38))
                       : accent,
                 ),
               ),
@@ -458,11 +481,14 @@ class BrandFab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final brand = BrandColors.of(context);
     return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: BrandColors.of(context).gradient,
+        gradient: brand.flat ? null : brand.gradient,
+        color: brand.flat ? cs.surface : null,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: brandGlow(cs),
+        border: brand.flat ? Border.all(color: cs.onSurface) : null,
+        boxShadow: brand.flat ? null : brandGlow(cs),
       ),
       child: Material(
         color: Colors.transparent,
@@ -476,6 +502,7 @@ class BrandFab extends StatelessWidget {
               label: label,
               icon: icon,
               expand: false,
+              content: brand.flat ? cs.onSurface : null,
             ),
           ),
         ),

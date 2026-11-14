@@ -11,6 +11,7 @@ import android.graphics.Color
 import android.graphics.ImageDecoder
 import android.graphics.Rect
 import android.os.Build
+import android.util.Log
 import android.view.WindowManager
 import androidx.core.content.FileProvider
 import io.flutter.embedding.engine.FlutterEngine
@@ -210,6 +211,27 @@ class MainActivity: FlutterAndroidVolumeKeydownActivity() {
                     else -> result.notImplemented()
                 }
             }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "tsumiru/eink")
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "deviceInfo" -> {
+                        val socManufacturer = try {
+                            Class.forName("android.os.SystemProperties")
+                                .getMethod("get", String::class.java)
+                                .invoke(null, "ro.soc.manufacturer") as? String
+                        } catch (_: Throwable) {
+                            null
+                        }
+                        result.success(mapOf(
+                            "model" to Build.MODEL,
+                            "manufacturer" to Build.MANUFACTURER,
+                            "socManufacturer" to socManufacturer,
+                        ))
+                    }
+                    "refreshScreen" -> result.success(probeEpdRefresh())
+                    else -> result.notImplemented()
+                }
+            }
     }
 
     override fun onDestroy() {
@@ -227,5 +249,102 @@ class MainActivity: FlutterAndroidVolumeKeydownActivity() {
         canvas.drawColor(Color.WHITE)
         canvas.drawBitmap(bitmap, 0f, 0f, null)
         return flat
+    }
+
+    /**
+     * Reflection-probes vendor EPD refresh mechanisms, in order:
+     * 1. Boyue-style patched android.view.View (requestEpdMode).
+     * 2. Rockchip IEinkManager binder service (Meebook/Boyue rk356x devices).
+     * Every step is guarded: false is a soft no-op on non-e-ink hardware.
+     */
+    private fun probeEpdRefresh(): Boolean {
+        if (requestEpdModeOnView()) return true
+        return refreshViaEinkManager()
+    }
+
+    private fun requestEpdModeOnView(): Boolean {
+        return try {
+            val viewClass = android.view.View::class.java
+            var epdFull = -1
+            for (name in listOf("EPD_FULL", "EPD_FULL_SCREEN", "EPD_GC16")) {
+                try {
+                    epdFull = viewClass.getField(name).getInt(null)
+                    break
+                } catch (_: Throwable) {
+                    // try the next constant name
+                }
+            }
+            if (epdFull < 0) {
+                Log.i("EinkRefresh", "no EPD_FULL constant on android.view.View")
+                return false
+            }
+            val method = viewClass.getMethod(
+                "requestEpdMode",
+                Int::class.javaPrimitiveType,
+                Boolean::class.javaPrimitiveType,
+            )
+            // MethodChannel handlers run on the platform main thread.
+            method.invoke(window.decorView, epdFull, true)
+            Log.i("EinkRefresh", "requestEpdMode($epdFull, true) invoked")
+            true
+        } catch (e: Throwable) {
+            Log.i("EinkRefresh", "requestEpdMode unavailable: ${e.javaClass.simpleName}")
+            false
+        }
+    }
+
+    private fun refreshViaEinkManager(): Boolean {
+        return try {
+            // Rockchip EPD (Meebook/Boyue): Context.EINK_SERVICE = "eink"
+            // returns android.os.EinkManager (hidden, so call it reflectively).
+            val service = getSystemService("eink") ?: run {
+                Log.i("EinkRefresh", "no eink system service")
+                return false
+            }
+            Log.i("EinkRefresh", "eink service obtained: ${service.javaClass.name}")
+            try {
+                val m = service.javaClass.getMethod("fullRefreshNoDelay")
+                m.invoke(service)
+                Log.i("EinkRefresh", "EinkManager.fullRefreshNoDelay() invoked")
+                return true
+            } catch (e: Throwable) {
+                Log.i("EinkRefresh", "fullRefreshNoDelay unavailable: ${e.javaClass.simpleName}")
+            }
+            try {
+                val m = service.javaClass.getMethod("sendOneFullFrame")
+                m.invoke(service)
+                Log.i("EinkRefresh", "EinkManager.sendOneFullFrame() invoked")
+                return true
+            } catch (e: Throwable) {
+                Log.i("EinkRefresh", "sendOneFullFrame unavailable: ${e.javaClass.simpleName}")
+            }
+            // Property fallback: bumping the timeline property triggers a full
+            // refresh in the Rockchip EPD service.
+            val sysProps = Class.forName("android.os.SystemProperties")
+            val get = sysProps.getMethod(
+                "get",
+                String::class.java,
+                String::class.java,
+            )
+            val set = sysProps.getMethod(
+                "set",
+                String::class.java,
+                String::class.java,
+            )
+            val current = (get.invoke(
+                null,
+                "sys.eink.one_full_mode_timeline",
+                "0",
+            ) as String).toLongOrNull() ?: 0L
+            set.invoke(null, "sys.eink.one_full_mode_timeline", (current + 1).toString())
+            Log.i("EinkRefresh", "bumped sys.eink.one_full_mode_timeline to ${current + 1}")
+            true
+        } catch (e: Throwable) {
+            Log.i(
+                "EinkRefresh",
+                "eink service unavailable: ${e.javaClass.simpleName}: ${e.message}",
+            )
+            false
+        }
     }
 }

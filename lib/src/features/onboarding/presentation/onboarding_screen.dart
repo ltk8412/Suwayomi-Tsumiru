@@ -13,7 +13,6 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../constants/db_keys.dart';
 import '../../../constants/enum.dart';
-import '../../../constants/gen/assets.gen.dart';
 import '../../../constants/urls.dart';
 import '../../../global_providers/global_providers.dart';
 import '../../../routes/router_config.dart';
@@ -24,6 +23,7 @@ import '../../../utils/motion/reduce_motion.dart';
 import '../../../utils/network/graphql_errors.dart';
 import '../../../utils/platform/web_auth_mode.dart';
 import '../../../utils/theme/brand.dart';
+import '../../../widgets/app_progress.dart';
 import '../../account/data/account_actions.dart';
 import '../../account/data/account_providers.dart';
 import '../../account/data/server_account_capability.dart';
@@ -34,11 +34,9 @@ import '../../auth/data/auth_credentials_store.dart';
 import '../../auth/data/custom_headers_store.dart';
 import '../../auth/data/ui_login_token_rejected.dart';
 import '../../auth/presentation/sign_in_action.dart';
-import '../../settings/presentation/appearance/widgets/app_theme_selector/app_theme_selector.dart';
 import '../../settings/presentation/connection/custom_headers_section.dart';
 import '../../settings/presentation/server/widget/client/server_port_tile/server_port_tile.dart';
 import '../../settings/presentation/server/widget/client/server_url_tile/server_url_tile.dart';
-import '../../settings/widgets/app_theme_mode_tile/app_theme_mode_tile.dart';
 import '../data/onboarding_complete.dart';
 import '../data/server_discovery.dart';
 import '../data/server_resolver.dart';
@@ -113,7 +111,8 @@ class OnboardingScreen extends HookConsumerWidget {
                   verifiedState: serverVerified,
                   requestState: nextRequest,
                   move: moveTo,
-                  skip: finish),
+                  skip: finish,
+                ),
               ),
             ),
           ),
@@ -122,11 +121,6 @@ class OnboardingScreen extends HookConsumerWidget {
     );
   }
 }
-
-AssetGenImage _brandLogo(BuildContext context) =>
-    Theme.of(context).brightness == Brightness.light
-    ? Assets.icons.logoOnLight
-    : Assets.icons.darkIcon;
 
 class _StepSwitcher extends StatelessWidget {
   const _StepSwitcher({required this.child});
@@ -227,7 +221,7 @@ class _NavBar extends StatelessWidget {
                   const SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: AppCircularProgress(strokeWidth: 2),
                   ),
                   const SizedBox(width: 12),
                   Flexible(
@@ -387,21 +381,19 @@ class _OnboardingBody extends StatelessWidget {
   }
 }
 
-
-class _ThemeStep extends ConsumerWidget {
+class _ThemeStep extends StatelessWidget {
   const _ThemeStep();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final cs = context.theme.colorScheme;
-    final mode = ref.watch(appThemeModeProvider) ?? ThemeMode.system;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 12),
         Center(
           child: Image.asset(
-            _brandLogo(context).path,
+            'assets/icons/logo_eink.png',
             height: _compactLogo(MediaQuery.sizeOf(context)) ? 96 : 160,
           ),
         ),
@@ -417,58 +409,10 @@ class _ThemeStep extends ConsumerWidget {
           context.l10n.onboardingWelcomeSubtitle,
           style: TextStyle(color: cs.onSurfaceVariant),
         ),
-        const SizedBox(height: 28),
-        Text(context.l10n.appearance, style: context.textTheme.titleMedium),
-        const SizedBox(height: 8),
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: SegmentedButton<ThemeMode>(
-            segments: [
-              ButtonSegment(
-                value: ThemeMode.system,
-                icon: const Icon(FluentIcons.dark_theme_24_regular),
-                label: Text(context.l10n.themeModeSystem),
-              ),
-              ButtonSegment(
-                value: ThemeMode.light,
-                icon: const Icon(FluentIcons.weather_sunny_24_regular),
-                label: Text(context.l10n.themeModeLight),
-              ),
-              ButtonSegment(
-                value: ThemeMode.dark,
-                icon: const Icon(FluentIcons.weather_moon_24_regular),
-                label: Text(context.l10n.themeModeDark),
-              ),
-            ],
-            selected: {mode},
-            showSelectedIcon: false,
-            onSelectionChanged: (selection) =>
-                ref.read(appThemeModeProvider.notifier).update(selection.first),
-            style: ButtonStyle(
-              backgroundColor: WidgetStateProperty.resolveWith(
-                (states) => states.contains(WidgetState.selected)
-                    ? cs.secondaryContainer
-                    : null,
-              ),
-              foregroundColor: WidgetStatePropertyAll(cs.onSurface),
-              side: WidgetStatePropertyAll(
-                BorderSide(color: cs.outlineVariant),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
-        ThemeSelector(
-          title: Text(
-            context.l10n.onboardingChooseTheme,
-            style: context.textTheme.titleMedium,
-          ),
-        ),
       ],
     );
   }
 }
-
 
 enum _TestState {
   idle,
@@ -1145,7 +1089,7 @@ class _ServerStep extends HookConsumerWidget {
                   ? const SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: AppCircularProgress(strokeWidth: 2),
                     )
                   : const Icon(FluentIcons.search_24_regular, size: 18),
               label: Text(
@@ -1169,7 +1113,7 @@ class _ServerStep extends HookConsumerWidget {
               ? SizedBox(
                   width: 18,
                   height: 18,
-                  child: CircularProgressIndicator(
+                  child: AppCircularProgress(
                     strokeWidth: 2,
                     color: cs.onPrimary,
                   ),
@@ -1205,9 +1149,7 @@ class _ServerStep extends HookConsumerWidget {
             requestFocusOnTap: false,
             label: Text(context.l10n.onboardingAuthMode),
             leadingIcon: const Icon(FluentIcons.shield_24_regular),
-            trailingIcon: const Icon(
-              FluentIcons.caret_down_24_filled,
-            ),
+            trailingIcon: const Icon(FluentIcons.caret_down_24_filled),
             inputDecorationTheme: const InputDecorationTheme(
               border: OutlineInputBorder(),
             ),
@@ -1252,8 +1194,7 @@ class _ServerStep extends HookConsumerWidget {
               !isSameOriginServer(
                 pageOrigin: pageOriginOrNull(),
                 serverAddress:
-                    (resolvedUrl.value != null &&
-                        resolvedUrl.value!.isNotEmpty)
+                    (resolvedUrl.value != null && resolvedUrl.value!.isNotEmpty)
                     ? resolvedUrl.value!
                     : urlController.text.trim(),
               ))
@@ -1320,7 +1261,7 @@ class _ServerStep extends HookConsumerWidget {
                 ? SizedBox(
                     width: 18,
                     height: 18,
-                    child: CircularProgressIndicator(
+                    child: AppCircularProgress(
                       strokeWidth: 2,
                       color: cs.onPrimary,
                     ),
@@ -1479,7 +1420,6 @@ class _StatusRow extends StatelessWidget {
     );
   }
 }
-
 
 class _FinishStep extends StatelessWidget {
   const _FinishStep();

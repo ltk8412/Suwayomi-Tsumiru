@@ -22,6 +22,7 @@ import '../../../../../../utils/extensions/custom_extensions.dart';
 import '../../../../../../utils/mixin/shared_preferences_client_mixin.dart';
 import '../../../../../../utils/motion/reduce_motion.dart';
 import '../../../../../../utils/platform/web_auth_mode.dart';
+import '../../../../../../widgets/app_progress.dart';
 import '../../../../../../widgets/popup_widgets/pop_button.dart';
 import '../../../../../account/data/account_actions.dart';
 import '../../../../../account/data/account_providers.dart';
@@ -327,7 +328,7 @@ class LoginCredentialsPopup extends HookConsumerWidget {
               ? const SizedBox(
                   width: 16,
                   height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: AppCircularProgress(strokeWidth: 2),
                 )
               : Text(context.l10n.authTestConnection),
         ),

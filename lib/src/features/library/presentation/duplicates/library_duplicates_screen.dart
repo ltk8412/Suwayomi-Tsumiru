@@ -14,6 +14,7 @@ import '../../../../constants/app_sizes.dart';
 import '../../../../routes/router_config.dart';
 import '../../../../utils/extensions/custom_extensions.dart';
 import '../../../../utils/motion/reduce_motion.dart';
+import '../../../../widgets/app_progress.dart';
 import '../../../../widgets/compact_switch.dart';
 import '../../../../widgets/cover_row_section.dart';
 import '../../../../widgets/desktop/desktop_top_bar.dart';
@@ -134,7 +135,7 @@ class LibraryDuplicatesScreen extends HookConsumerWidget {
               selecting: selecting,
               onToggleSelection: toggleSelection,
             ),
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const Center(child: AppCircularProgress()),
             error: (error, _) => Center(child: Text('$error')),
           ),
         ),

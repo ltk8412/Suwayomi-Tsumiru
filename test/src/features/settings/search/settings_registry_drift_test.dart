@@ -22,7 +22,6 @@ import 'package:graphql/client.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tsumiru/src/constants/app_theme.dart';
 import 'package:tsumiru/src/constants/db_keys.dart';
 import 'package:tsumiru/src/features/account/data/account_providers.dart';
 import 'package:tsumiru/src/features/account/data/account_repository.dart';
@@ -40,7 +39,6 @@ import 'package:tsumiru/src/features/settings/domain/settings/graphql/__generate
 import 'package:tsumiru/src/features/settings/domain/settings/settings.dart';
 import 'package:tsumiru/src/features/settings/presentation/advanced/advanced_screen.dart';
 import 'package:tsumiru/src/features/settings/presentation/appearance/appearance_screen.dart';
-import 'package:tsumiru/src/features/settings/presentation/appearance/widgets/app_theme_selector/app_theme_providers.dart';
 import 'package:tsumiru/src/features/settings/presentation/backup/backup_screen.dart';
 import 'package:tsumiru/src/features/settings/presentation/backup/data/backup_settings_repository.dart';
 import 'package:tsumiru/src/features/settings/presentation/backup/data/graphql/__generated__/query.graphql.dart';
@@ -187,11 +185,6 @@ class _FixedDeleteChapters extends DeleteChaptersSettingsController {
       const DeleteChaptersSettings();
 }
 
-class _CustomTheme extends AppThemeKey {
-  @override
-  AppTheme? build() => AppTheme.custom;
-}
-
 SettingsDto _serverSettings() => Fragment$SettingsDto(
   backupInterval: 0,
   backupPath: '',
@@ -313,9 +306,7 @@ void main() {
       tester.view.physicalSize = const Size(800, 10000);
 
       await pumpAndCheck(
-        await _container(
-          extra: [appThemeKeyProvider.overrideWith(_CustomTheme.new)],
-        ),
+        await _container(),
         const AppearanceScreen(),
         appearanceSettingsSearchEntries,
       );
