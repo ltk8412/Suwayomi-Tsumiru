@@ -12,6 +12,7 @@ import 'package:hooks_riverpod/legacy.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../../utils/extensions/custom_extensions.dart';
+import '../../../../utils/theme/brand.dart';
 import '../../../../widgets/search_field.dart';
 import 'search_tips.dart';
 import 'unified_search_autocomplete.dart';
@@ -36,10 +37,7 @@ class _MoveSearchHighlightIntent extends Intent {
 }
 
 class _MoveSearchHighlightAction extends Action<_MoveSearchHighlightIntent> {
-  _MoveSearchHighlightAction({
-    required this.isActive,
-    required this.onInvoke,
-  });
+  _MoveSearchHighlightAction({required this.isActive, required this.onInvoke});
 
   final bool Function() isActive;
   final void Function(int delta) onInvoke;
@@ -297,7 +295,7 @@ class DesktopSearchField extends HookConsumerWidget {
                     ),
                     child: Material(
                       color: scheme.surfaceContainer,
-                      elevation: 8,
+                      elevation: BrandColors.of(context).flat ? 0 : 8,
                       clipBehavior: Clip.antiAlias,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -376,7 +374,10 @@ class DesktopSearchField extends HookConsumerWidget {
                     border: InputBorder.none,
                     isDense: true,
                     hintText: hintText ?? l.unifiedSearchHint,
-                    prefixIcon: const Icon(FluentIcons.search_24_regular, size: 20),
+                    prefixIcon: const Icon(
+                      FluentIcons.search_24_regular,
+                      size: 20,
+                    ),
                     prefixIconConstraints: iconConstraints,
                     suffixIcon: Row(
                       mainAxisSize: MainAxisSize.min,

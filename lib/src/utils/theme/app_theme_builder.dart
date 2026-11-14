@@ -65,21 +65,34 @@ ThemeData buildAppTheme({
   final outline = scheme.outlineVariant;
   final brightPrimary = brandBrightAccent(scheme);
 
+  // E-ink paper: flat black-on-white surfaces, no elevation shadows, buttons
+  // become white with a black outline and black text.
+  final flat = theme == AppTheme.einkPaper;
+
   ButtonStyle filledLike() => ButtonStyle(
     backgroundColor: WidgetStateProperty.resolveWith(
-      (s) => s.contains(WidgetState.disabled)
+      (s) => flat
+          ? scheme.surface
+          : s.contains(WidgetState.disabled)
           ? scheme.onSurface.withValues(alpha: 0.12)
           : primary,
     ),
     foregroundColor: WidgetStateProperty.resolveWith(
-      (s) => s.contains(WidgetState.disabled)
+      (s) => flat
+          ? scheme.onSurface
+          : s.contains(WidgetState.disabled)
           ? scheme.onSurface.withValues(alpha: 0.38)
           : scheme.onPrimary,
     ),
-    shadowColor: WidgetStatePropertyAll(primary.withValues(alpha: 0.6)),
-    elevation: WidgetStateProperty.resolveWith(
-      (s) => s.contains(WidgetState.disabled) ? 0 : 6,
+    shadowColor: WidgetStatePropertyAll(
+      flat ? Colors.transparent : primary.withValues(alpha: 0.6),
     ),
+    elevation: WidgetStateProperty.resolveWith(
+      (s) => flat || s.contains(WidgetState.disabled) ? 0 : 6,
+    ),
+    side: flat
+        ? WidgetStatePropertyAll(BorderSide(color: scheme.onSurface))
+        : null,
     shape: WidgetStatePropertyAll(
       RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
     ),
@@ -219,10 +232,13 @@ ThemeData buildAppTheme({
     ),
     progressIndicatorTheme: ProgressIndicatorThemeData(color: primary),
     floatingActionButtonTheme: FloatingActionButtonThemeData(
-      backgroundColor: primary,
-      foregroundColor: scheme.onPrimary,
-      elevation: 6,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      backgroundColor: flat ? scheme.surface : primary,
+      foregroundColor: flat ? scheme.onSurface : scheme.onPrimary,
+      elevation: flat ? 0 : 6,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: flat ? BorderSide(color: scheme.onSurface) : BorderSide.none,
+      ),
     ),
     filledButtonTheme: FilledButtonThemeData(style: filledLike()),
     elevatedButtonTheme: ElevatedButtonThemeData(style: filledLike()),
@@ -230,13 +246,24 @@ ThemeData buildAppTheme({
       style: ButtonStyle(
         foregroundColor: WidgetStatePropertyAll(brightPrimary),
         side: WidgetStatePropertyAll(
-          BorderSide(color: primary.withValues(alpha: 0.5)),
+          BorderSide(
+            color: flat ? scheme.onSurface : primary.withValues(alpha: 0.5),
+          ),
         ),
         shape: WidgetStatePropertyAll(
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
       ),
     ),
+    snackBarTheme: flat
+        ? const SnackBarThemeData(elevation: 0)
+        : const SnackBarThemeData(),
+    bottomSheetTheme: flat
+        ? const BottomSheetThemeData(elevation: 0)
+        : const BottomSheetThemeData(),
+    dialogTheme: flat
+        ? const DialogThemeData(elevation: 0)
+        : const DialogThemeData(),
     textButtonTheme: TextButtonThemeData(
       style: ButtonStyle(
         foregroundColor: WidgetStateProperty.resolveWith(

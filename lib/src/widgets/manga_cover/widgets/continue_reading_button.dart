@@ -8,6 +8,7 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../utils/extensions/custom_extensions.dart';
+import '../../../utils/theme/brand.dart';
 
 /// Its InkWell consumes the tap so opening the reader does not also open details.
 class ContinueReadingButton extends StatelessWidget {
@@ -29,7 +30,7 @@ class ContinueReadingButton extends StatelessWidget {
       color: scheme.primaryContainer.withValues(alpha: 0.9),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       clipBehavior: Clip.antiAlias,
-      elevation: 2,
+      elevation: BrandColors.of(context).flat ? 0 : 2,
       child: InkWell(
         onTap: onPressed,
         child: SizedBox.square(

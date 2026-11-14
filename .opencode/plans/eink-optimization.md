@@ -214,8 +214,31 @@ desktop/web paths no-op).
 - Under `einkActive`, `BrandColors.gradient` degrades to a flat surface color and
   `brandGlow` is skipped (gradients/shadows are dither noise).
 
+### Shadows & flat chrome (e-ink only)
+
+`BrandColors.flat` (true for `einkPaper`) is the single flag every shadow check
+uses; it is set in `buildAppTheme` via `flat = theme == AppTheme.einkPaper`.
+
+- **Theme-level** (`app_theme_builder.dart`): when `flat`, filled/elevated button
+  style drops `shadowColor`/`elevation` (→ 0), FAB `elevation` → 0, and
+  `snackBarTheme`/`bottomSheetTheme`/`dialogTheme` get `elevation: 0`.
+- **Buttons become black text on white**: when `flat`, filled/elevated buttons
+  use `surface` background + `onSurface` foreground + a 1px `onSurface` outline;
+  outlined buttons use a solid `onSurface` border; the FAB uses `surface`
+  background + `onSurface` foreground + outline. Text buttons are already black
+  (`brightPrimary` = `primary` = black in light).
+- **Bars** (app bar, navigation bar/rail, top bar) are already black-on-white via
+  the scheme (`surface` + `onSurface`), with `elevation: 0`; the e-ink theme only
+  needs no additional changes there.
+- **Call sites** gated on `BrandColors.of(context).flat` (elevation → 0, box
+  shadows → null): series header gradient glow, toast shadow, chapter-grid tile
+  glow, continue-reading button, desktop navigation rail, desktop library panels,
+  desktop search field. Cover-art scrims (`OnImage.shadow`, `showDarkOverlay`)
+  are content-legibility, not UI chrome — intentionally left alone.
+
 **Files:** `constants/app_theme.dart`, `utils/theme/theme_tokens.dart`,
-`utils/theme/brand.dart`, theme-kit repo note.
+`utils/theme/brand.dart`, `utils/theme/app_theme_builder.dart`, the call-site
+widgets above, theme-kit repo note.
 
 ---
 

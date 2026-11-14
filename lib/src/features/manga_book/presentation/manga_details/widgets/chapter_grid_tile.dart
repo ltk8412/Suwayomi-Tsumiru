@@ -132,14 +132,16 @@ class ChapterGridTile extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: BrandColors.of(context).gradient,
           borderRadius: BorderRadius.circular(13.5),
-          boxShadow: [
-            BoxShadow(
-              color: cs.primary.withValues(alpha: 0.3),
-              blurRadius: 10,
-              spreadRadius: -2,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          boxShadow: BrandColors.of(context).flat
+              ? null
+              : [
+                  BoxShadow(
+                    color: cs.primary.withValues(alpha: 0.3),
+                    blurRadius: 10,
+                    spreadRadius: -2,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         padding: const EdgeInsets.all(1.5),
         child: tile,

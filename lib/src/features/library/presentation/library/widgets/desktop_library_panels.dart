@@ -14,6 +14,7 @@ import '../../../../../constants/db_keys.dart';
 import '../../../../../constants/enum.dart';
 import '../../../../../utils/extensions/custom_extensions.dart';
 import '../../../../../utils/motion/reduce_motion.dart';
+import '../../../../../utils/theme/brand.dart';
 import '../../../../../widgets/manga_cover/providers/manga_cover_providers.dart';
 import '../../../../tracking/data/tracker_repository.dart';
 import '../../../domain/library_group.dart';
@@ -114,8 +115,10 @@ class _LibraryPanelRoute extends PopupRoute<void> {
               final scheme = context.theme.colorScheme;
               return Material(
                 color: scheme.surfaceContainer,
-                elevation: 3,
-                shadowColor: scheme.shadow,
+                elevation: BrandColors.of(context).flat ? 0 : 3,
+                shadowColor: BrandColors.of(context).flat
+                    ? Colors.transparent
+                    : scheme.shadow,
                 surfaceTintColor: Colors.transparent,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),

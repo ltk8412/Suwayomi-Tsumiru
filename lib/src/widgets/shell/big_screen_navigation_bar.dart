@@ -12,6 +12,7 @@ import '../../features/browse_center/presentation/extension/controller/extension
 import '../../features/offline/data/offline_nav_status.dart';
 import '../../routes/router_config.dart';
 import '../../utils/extensions/custom_extensions.dart';
+import '../../utils/theme/brand.dart';
 import '../tsumiru_logo.dart';
 import 'desktop_sidebar.dart';
 import 'nav_badges.dart';
@@ -72,7 +73,7 @@ class BigScreenNavigationBar extends ConsumerWidget {
           child: IntrinsicHeight(
             child: NavigationRail(
               useIndicator: true,
-              elevation: 5,
+              elevation: BrandColors.of(context).flat ? 0 : 5,
               extended: false,
               labelType: NavigationRailLabelType.all,
               leading: isPhone ? null : leadingIcon,

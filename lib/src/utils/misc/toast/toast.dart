@@ -16,6 +16,7 @@ import '../../../routes/router_config.dart';
 import '../../extensions/custom_extensions.dart';
 import '../../motion/reduce_motion.dart';
 import '../../network/graphql_errors.dart';
+import '../../theme/brand.dart';
 
 part 'toast.g.dart';
 
@@ -191,13 +192,15 @@ class ToastWidget extends StatelessWidget {
           color: isError ? scheme.error : scheme.outlineVariant,
         ),
         // No panel shadow token in the theme; shadow role keeps it neutral in every theme.
-        boxShadow: [
-          BoxShadow(
-            color: scheme.shadow.withValues(alpha: 0.25),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: BrandColors.of(context).flat
+            ? null
+            : [
+                BoxShadow(
+                  color: scheme.shadow.withValues(alpha: 0.25),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
       child: leading != null
           ? Row(
