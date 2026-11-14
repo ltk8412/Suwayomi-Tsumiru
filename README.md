@@ -1,12 +1,17 @@
 <p align="center">
  <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/icons/dark_icon.png">
-  <source media="(prefers-color-scheme: light)" srcset="assets/icons/logo_on_light.png">
-  <img width=120px height=120px src="assets/icons/dark_icon.png" alt="Tsumiru logo"/>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/icons/logo_eink.png">
+  <source media="(prefers-color-scheme: light)" srcset="assets/icons/logo_eink.png">
+  <img width=120px height=120px src="assets/icons/logo_eink.png" alt="Tsumiru e-ink logo"/>
  </picture>
 </p>
 
-<h1 align="center">Tsumiru</h1>
+<h1 align="center">Tsumiru (E-Ink Fork)</h1>
+
+> **⚠️ E-ink fork.** This branch is a dedicated fork of Tsumiru, optimized for
+> e-ink readers (Meebook M103, Onyx Boox, Hisense, Bigme, …): a monochrome
+> paper-white theme, no animations / transparency / shadows, paged reading, and
+> native EPD full refresh on supported devices.
 
 <div align="center">
 
