@@ -80,6 +80,7 @@ class BrandPageSeekBar extends StatelessWidget {
               gradient: brand.gradient,
               onGradient: brand.onGradient,
               count: maxValue,
+              flat: brand.flat,
             ),
           ),
         );
@@ -92,8 +93,10 @@ class BrandPageSeekBar extends StatelessWidget {
       color: cs.onSurface,
       fontFeatures: const [ui.FontFeature.tabularFigures()],
     );
-    final current =
-        Text("${(currentValue + 1).clamp(1, maxValue)}", style: numStyle);
+    final current = Text(
+      "${(currentValue + 1).clamp(1, maxValue)}",
+      style: numStyle,
+    );
     final total = Text("$maxValue", style: numStyle);
     const thickness = 26.0;
     const gap = SizedBox.square(dimension: 10);
@@ -103,7 +106,9 @@ class BrandPageSeekBar extends StatelessWidget {
             children: [
               inverted ? total : current,
               gap,
-              Expanded(child: SizedBox(height: thickness, child: bar)),
+              Expanded(
+                child: SizedBox(height: thickness, child: bar),
+              ),
               gap,
               inverted ? current : total,
             ],
@@ -112,16 +117,27 @@ class BrandPageSeekBar extends StatelessWidget {
             children: [
               current,
               gap,
-              Expanded(child: SizedBox(width: thickness, child: bar)),
+              Expanded(
+                child: SizedBox(width: thickness, child: bar),
+              ),
               gap,
               total,
             ],
           );
 
     return Card(
-      color: capsuleColor ??
-          context.theme.appBarTheme.backgroundColor?.withValues(alpha: .7),
-      shape: RoundedRectangleBorder(borderRadius: KBorderRadius.r32.radius),
+      color:
+          capsuleColor ??
+          (brand.flat
+              ? cs.surface
+              : context.theme.appBarTheme.backgroundColor?.withValues(
+                  alpha: .7,
+                )),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: KBorderRadius.r32.radius,
+        side: brand.flat ? BorderSide(color: cs.onSurface) : BorderSide.none,
+      ),
       child: Padding(
         padding: axis == Axis.horizontal
             ? const EdgeInsets.symmetric(horizontal: 16, vertical: 6)
@@ -141,6 +157,7 @@ class _SeekPainter extends CustomPainter {
     required this.gradient,
     required this.onGradient,
     required this.count,
+    required this.flat,
   });
 
   final Axis axis;
@@ -149,6 +166,7 @@ class _SeekPainter extends CustomPainter {
   final ColorScheme scheme;
   final Gradient gradient;
   final Color onGradient;
+  final bool flat;
 
   final int count;
 
@@ -167,7 +185,10 @@ class _SeekPainter extends CustomPainter {
 
     canvas.drawRRect(
       RRect.fromRectAndRadius(bar(0, length), radius),
-      Paint()..color = scheme.primary.withValues(alpha: 0.22),
+      Paint()
+        ..color = flat
+            ? scheme.surfaceContainerHighest
+            : scheme.primary.withValues(alpha: 0.22),
     );
 
     final marker = (length * position).clamp(0.0, length);
@@ -180,8 +201,12 @@ class _SeekPainter extends CustomPainter {
     }
 
     if (count > 1) {
-      final onFill = Paint()..color = onGradient.withValues(alpha: 0.45);
-      final onTrack = Paint()..color = scheme.onSurface.withValues(alpha: 0.4);
+      final onFill = Paint()
+        ..color = flat ? scheme.onSurface : onGradient.withValues(alpha: 0.45);
+      final onTrack = Paint()
+        ..color = flat
+            ? scheme.onSurfaceVariant
+            : scheme.onSurface.withValues(alpha: 0.4);
       for (var i = 0; i < count; i++) {
         final frac = i / (count - 1);
         final tickFilled = inverted ? frac >= position : frac <= position;
@@ -196,27 +221,37 @@ class _SeekPainter extends CustomPainter {
     final pos = marker;
     const half = 13.0;
     const mkt = 4.0;
-    final p1 =
-        horizontal ? Offset(pos, cross - half) : Offset(cross - half, pos);
-    final p2 =
-        horizontal ? Offset(pos, cross + half) : Offset(cross + half, pos);
-    canvas.drawLine(
-      p1,
-      p2,
-      Paint()
-        ..color = scheme.primary.withValues(alpha: 0.55)
-        ..strokeWidth = mkt + 5
-        ..strokeCap = StrokeCap.round
-        ..maskFilter = const ui.MaskFilter.blur(BlurStyle.normal, 5),
-    );
+    final p1 = horizontal
+        ? Offset(pos, cross - half)
+        : Offset(cross - half, pos);
+    final p2 = horizontal
+        ? Offset(pos, cross + half)
+        : Offset(cross + half, pos);
+    // The blurred halo behind the marker reads as a shadow on e-ink; skip it.
+    if (!flat) {
+      canvas.drawLine(
+        p1,
+        p2,
+        Paint()
+          ..color = scheme.primary.withValues(alpha: 0.55)
+          ..strokeWidth = mkt + 5
+          ..strokeCap = StrokeCap.round
+          ..maskFilter = const ui.MaskFilter.blur(BlurStyle.normal, 5),
+      );
+    }
     final markerRect = Rect.fromPoints(p1, p2).inflate(mkt);
     canvas.drawLine(
       p1,
       p2,
-      Paint()
-        ..shader = gradient.createShader(markerRect)
-        ..strokeWidth = mkt
-        ..strokeCap = StrokeCap.round,
+      flat
+          ? (Paint()
+              ..color = scheme.onSurface
+              ..strokeWidth = mkt
+              ..strokeCap = StrokeCap.round)
+          : (Paint()
+              ..shader = gradient.createShader(markerRect)
+              ..strokeWidth = mkt
+              ..strokeCap = StrokeCap.round),
     );
   }
 

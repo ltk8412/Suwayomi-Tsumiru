@@ -191,9 +191,14 @@ class BrandButton extends StatelessWidget {
     final disabled = onPressed == null && !loading;
     return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: disabled ? null : brand.gradient,
-        color: disabled ? cs.onSurface.withValues(alpha: 0.12) : null,
+        gradient: disabled || brand.flat ? null : brand.gradient,
+        color: brand.flat
+            ? cs.surface
+            : disabled
+            ? cs.onSurface.withValues(alpha: 0.12)
+            : null,
         borderRadius: BorderRadius.circular(14),
+        border: brand.flat ? Border.all(color: cs.onSurface) : null,
         boxShadow: disabled || brand.flat ? null : brandGlow(cs),
       ),
       child: Material(
@@ -210,14 +215,16 @@ class BrandButton extends StatelessWidget {
                     ? MiniCircularProgressIndicator(
                         size: 16,
                         padding: const EdgeInsets.all(8),
-                        color: brand.onGradient,
+                        color: brand.flat ? cs.onSurface : brand.onGradient,
                       )
                     : _brandRow(
                         context: context,
                         label: label,
                         icon: icon,
                         expand: expand,
-                        content: disabled
+                        content: brand.flat
+                            ? (disabled ? cs.onSurfaceVariant : cs.onSurface)
+                            : disabled
                             ? cs.onSurface.withValues(alpha: 0.38)
                             : null,
                       ),
@@ -477,8 +484,10 @@ class BrandFab extends StatelessWidget {
     final brand = BrandColors.of(context);
     return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: brand.gradient,
+        gradient: brand.flat ? null : brand.gradient,
+        color: brand.flat ? cs.surface : null,
         borderRadius: BorderRadius.circular(18),
+        border: brand.flat ? Border.all(color: cs.onSurface) : null,
         boxShadow: brand.flat ? null : brandGlow(cs),
       ),
       child: Material(
@@ -493,6 +502,7 @@ class BrandFab extends StatelessWidget {
               label: label,
               icon: icon,
               expand: false,
+              content: brand.flat ? cs.onSurface : null,
             ),
           ),
         ),

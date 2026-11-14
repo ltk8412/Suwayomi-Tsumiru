@@ -227,8 +227,11 @@ check uses; it is set in `buildAppTheme` via `flat = theme == AppTheme.einkPaper
   use `surface` background + `onSurface` foreground + a 1px `onSurface` outline
   (disabled = solid `surfaceContainerHighest` + `onSurfaceVariant` text, no
   alpha); outlined buttons use a solid `onSurface` border; the FAB uses `surface`
-  background + `onSurface` foreground + outline; chips get an opaque `surface`
-  background + solid border. Text buttons are already black.
+  background + `onSurface` foreground + outline; `BrandButton` and `BrandFab`
+  (the gradient primary-action buttons) drop their gradient and render `surface`
+  background + `onSurface` text + border; `BrandGlassButton` is opaque. Chips
+  get an opaque `surface` background + solid border. Text buttons are already
+  black.
 - **Bars** (app bar, navigation bar/rail, top bar) are already black-on-white via
   the scheme (`surface` + `onSurface`), with `elevation: 0`; the e-ink theme only
   needs no additional changes there.
@@ -236,7 +239,10 @@ check uses; it is set in `buildAppTheme` via `flat = theme == AppTheme.einkPaper
   `flat` (reader chrome bars drop their 0.9/0.95 alpha); `BrandGlassButton`
   becomes an opaque `surface` with a border and solid text; the cover
   read-progress bar uses an opaque `surfaceContainerHighest` track instead of the
-  translucent black track (which dithers/reads as a shadow on e-ink).
+  translucent black track (which dithers/reads as a shadow on e-ink). The reader
+  seekbar (`BrandPageSeekBar`) drops its blurred marker halo
+  (`MaskFilter.blur`), uses solid track/tick/marker colors, and renders an opaque
+  bordered capsule.
 - **Swipe transitions**: page-turn, pan/zoom, tap-zone-hint, and chapter-route
   transitions are all gated on `context.reduceMotion` (which e-ink forces). The
   preset additionally writes `animatePageTransitions: false` as belt-and-braces.
