@@ -106,8 +106,14 @@ abstract final class OnImage {
 }
 
 /// Shared reader chrome surface; high opacity preserves contrast over white pages.
-Color readerNavSurface(ColorScheme cs) =>
-    cs.surface.withValues(alpha: cs.brightness == Brightness.dark ? 0.9 : 0.95);
+/// Fully opaque in the e-ink paper theme (translucency dithers on e-ink).
+Color readerNavSurface(BuildContext context) {
+  final cs = Theme.of(context).colorScheme;
+  if (BrandColors.of(context).flat) return cs.surface;
+  return cs.surface.withValues(
+    alpha: cs.brightness == Brightness.dark ? 0.9 : 0.95,
+  );
+}
 
 /// Brighten dark-mode text actions only; light mode retains primary contrast.
 Color brandBrightAccent(ColorScheme cs) => cs.brightness == Brightness.light
@@ -243,12 +249,13 @@ class BrandGlassButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final flat = BrandColors.of(context).flat;
     final accent = brandBrightAccent(cs);
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: cs.onSurface.withValues(alpha: 0.05),
+        color: flat ? cs.surface : cs.onSurface.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cs.outlineVariant),
+        border: Border.all(color: flat ? cs.onSurface : cs.outlineVariant),
       ),
       child: Material(
         color: Colors.transparent,
@@ -266,7 +273,9 @@ class BrandGlassButton extends StatelessWidget {
                   icon: icon,
                   expand: expand,
                   content: onPressed == null
-                      ? cs.onSurface.withValues(alpha: 0.38)
+                      ? (flat
+                            ? cs.onSurfaceVariant
+                            : cs.onSurface.withValues(alpha: 0.38))
                       : accent,
                 ),
               ),

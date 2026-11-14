@@ -600,7 +600,11 @@ class _CoverReadProgressBar extends ConsumerWidget {
     return AppLinearProgress(
       value: fraction,
       minHeight: 3,
-      backgroundColor: Colors.black.withValues(alpha: 0.35),
+      // Opaque track in e-ink mode — the translucent dark track reads as a
+      // shadow/dither artifact on e-ink panels.
+      backgroundColor: BrandColors.of(context).flat
+          ? context.theme.colorScheme.surfaceContainerHighest
+          : Colors.black.withValues(alpha: 0.35),
       color: context.theme.colorScheme.primary,
     );
   }

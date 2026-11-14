@@ -55,7 +55,7 @@ class ReaderTopBar extends ConsumerWidget {
     final systemTopInset = MediaQuery.viewPaddingOf(context).top;
 
     return Material(
-      color: readerNavSurface(context.theme.colorScheme),
+      color: readerNavSurface(context),
       elevation: 0,
       child: Padding(
         padding: EdgeInsets.only(top: systemTopInset),

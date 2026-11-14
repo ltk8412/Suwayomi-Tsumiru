@@ -357,7 +357,7 @@ class _PageNumberIndicator extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: readerNavSurface(cs),
+        color: readerNavSurface(context),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(

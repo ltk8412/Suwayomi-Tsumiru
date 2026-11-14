@@ -84,8 +84,9 @@ class ReaderBottomControls extends ConsumerWidget {
     );
     final pageLayout = ref.watch(pageLayoutKeyProvider) ?? PageLayout.automatic;
     final dualPageSplitPaged = ref.watch(dualPageSplitPagedProvider).ifNull();
-    final settingsModel =
-        ref.watch(readerSettingsModelProvider(chapter.mangaId));
+    final settingsModel = ref.watch(
+      readerSettingsModelProvider(chapter.mangaId),
+    );
     final offsetDoublePages = settingsModel.offsetDoublePages;
     final cropBorders = isPagedMode
         ? ref.watch(cropBordersProvider).ifNull()
@@ -134,7 +135,7 @@ class ReaderBottomControls extends ConsumerWidget {
                   Card(
                     shape: const CircleBorder(),
                     elevation: 0,
-                    color: readerNavSurface(context.theme.colorScheme),
+                    color: readerNavSurface(context),
                     child: IconButton(
                       onPressed: chapterButtons.leading,
                       icon: const Icon(FluentIcons.previous_24_filled),
@@ -147,13 +148,13 @@ class ReaderBottomControls extends ConsumerWidget {
                           totalPageCount ?? chapterPages.chapter.pageCount,
                       onChanged: onChanged,
                       inverted: reverseSeekBar,
-                      capsuleColor: readerNavSurface(context.theme.colorScheme),
+                      capsuleColor: readerNavSurface(context),
                     ),
                   ),
                   Card(
                     shape: const CircleBorder(),
                     elevation: 0,
-                    color: readerNavSurface(context.theme.colorScheme),
+                    color: readerNavSurface(context),
                     child: IconButton(
                       onPressed: chapterButtons.trailing,
                       icon: const Icon(FluentIcons.next_24_filled),
@@ -164,7 +165,7 @@ class ReaderBottomControls extends ConsumerWidget {
               const Gap(8),
             ],
             Card(
-              color: readerNavSurface(context.theme.colorScheme),
+              color: readerNavSurface(context),
               elevation: 0,
               shape: const RoundedRectangleBorder(),
               margin: EdgeInsets.zero,
@@ -176,7 +177,9 @@ class ReaderBottomControls extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     IconButton(
-                      icon: const Icon(FluentIcons.text_number_list_ltr_24_regular),
+                      icon: const Icon(
+                        FluentIcons.text_number_list_ltr_24_regular,
+                      ),
                       onPressed: () => _showChapterPicker(
                         context: context,
                         mangaId: chapter.mangaId,
@@ -238,7 +241,8 @@ class ReaderBottomControls extends ConsumerWidget {
 }
 
 IconData _readerModeIcon(ReaderMode mode) => switch (mode) {
-  ReaderMode.webtoon || ReaderMode.continuousVertical => FluentIcons.globe_24_regular,
+  ReaderMode.webtoon ||
+  ReaderMode.continuousVertical => FluentIcons.globe_24_regular,
   ReaderMode.singleHorizontalLTR ||
   ReaderMode.singleHorizontalRTL ||
   ReaderMode.singleVertical ||

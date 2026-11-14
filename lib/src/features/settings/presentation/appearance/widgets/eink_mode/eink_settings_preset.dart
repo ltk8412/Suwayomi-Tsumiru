@@ -34,6 +34,8 @@ Future<void> applyEinkSettingsPreset(BuildContext context) async {
   container.read(smallerTapZonesProvider.notifier).update(false);
   container.read(volumeTapProvider.notifier).update(true);
   container.read(appReduceMotionProvider.notifier).set(true);
+  // Belt-and-braces: page-turn/swipe transitions are also reduce-motion-gated.
+  container.read(animatePageTransitionsProvider.notifier).update(false);
 
   final nativeRefresh = await ensureNativeRefreshProbed(container);
   container.read(flashOnPageChangeProvider.notifier).update(!nativeRefresh);

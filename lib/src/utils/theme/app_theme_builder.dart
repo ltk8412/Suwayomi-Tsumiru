@@ -72,14 +72,18 @@ ThemeData buildAppTheme({
   ButtonStyle filledLike() => ButtonStyle(
     backgroundColor: WidgetStateProperty.resolveWith(
       (s) => flat
-          ? scheme.surface
+          ? (s.contains(WidgetState.disabled)
+                ? scheme.surfaceContainerHighest
+                : scheme.surface)
           : s.contains(WidgetState.disabled)
           ? scheme.onSurface.withValues(alpha: 0.12)
           : primary,
     ),
     foregroundColor: WidgetStateProperty.resolveWith(
       (s) => flat
-          ? scheme.onSurface
+          ? (s.contains(WidgetState.disabled)
+                ? scheme.onSurfaceVariant
+                : scheme.onSurface)
           : s.contains(WidgetState.disabled)
           ? scheme.onSurface.withValues(alpha: 0.38)
           : scheme.onPrimary,
@@ -190,7 +194,19 @@ ThemeData buildAppTheme({
       ),
     ),
     dividerTheme: DividerThemeData(color: outline, thickness: 1, space: 1),
-    chipTheme: tokens?.accentBg != null
+    chipTheme: flat
+        ? ChipThemeData(
+            backgroundColor: scheme.surface,
+            selectedColor: scheme.surfaceContainerHighest,
+            side: WidgetStateBorderSide.resolveWith(
+              (_) => BorderSide(color: scheme.onSurface),
+            ),
+            labelStyle: TextStyle(color: scheme.onSurface),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(11),
+            ),
+          )
+        : tokens?.accentBg != null
         ? ChipThemeData(
             backgroundColor: Colors.transparent,
             selectedColor: tokens!.accentBg,
@@ -256,13 +272,33 @@ ThemeData buildAppTheme({
       ),
     ),
     snackBarTheme: flat
-        ? const SnackBarThemeData(elevation: 0)
+        ? SnackBarThemeData(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
+              side: BorderSide(color: scheme.onSurface),
+            ),
+          )
         : const SnackBarThemeData(),
     bottomSheetTheme: flat
-        ? const BottomSheetThemeData(elevation: 0)
+        ? BottomSheetThemeData(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
+              side: BorderSide(color: scheme.onSurface),
+            ),
+          )
         : const BottomSheetThemeData(),
     dialogTheme: flat
-        ? const DialogThemeData(elevation: 0)
+        ? DialogThemeData(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: scheme.onSurface),
+            ),
+          )
         : const DialogThemeData(),
     textButtonTheme: TextButtonThemeData(
       style: ButtonStyle(

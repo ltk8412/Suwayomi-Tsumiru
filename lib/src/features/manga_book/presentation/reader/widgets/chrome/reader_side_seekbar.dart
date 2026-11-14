@@ -8,7 +8,6 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:gap/gap.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../../../../../../utils/extensions/custom_extensions.dart';
 import '../../../../../../utils/theme/brand.dart';
 import '../brand_page_seekbar.dart';
 
@@ -35,7 +34,7 @@ class ReaderSideSeekBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final navSurface = readerNavSurface(context.theme.colorScheme);
+    final navSurface = readerNavSurface(context);
 
     return Column(
       children: [

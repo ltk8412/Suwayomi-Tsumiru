@@ -66,7 +66,7 @@ class ReaderUtilsBar extends ConsumerWidget {
         : context.l10n.autoAdvance;
 
     return Material(
-      color: readerNavSurface(cs),
+      color: readerNavSurface(context),
       child: ValueListenableBuilder<bool>(
         valueListenable: expanded,
         builder: (context, isOpen, _) => Column(
@@ -103,7 +103,10 @@ class ReaderUtilsBar extends ConsumerWidget {
                           ),
                           // Faster = shorter interval, so "-" lowers seconds.
                           IconButton(
-                            icon: Icon(FluentIcons.subtract_24_regular, color: cs.onSurface),
+                            icon: Icon(
+                              FluentIcons.subtract_24_regular,
+                              color: cs.onSurface,
+                            ),
                             onPressed: () => setInterval(interval - 1),
                           ),
                           Text(
@@ -111,7 +114,10 @@ class ReaderUtilsBar extends ConsumerWidget {
                             style: TextStyle(color: cs.onSurface),
                           ),
                           IconButton(
-                            icon: Icon(FluentIcons.add_24_regular, color: cs.onSurface),
+                            icon: Icon(
+                              FluentIcons.add_24_regular,
+                              color: cs.onSurface,
+                            ),
                             onPressed: () => setInterval(interval + 1),
                           ),
                         ],
