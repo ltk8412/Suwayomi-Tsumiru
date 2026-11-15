@@ -84,3 +84,5 @@ flatpak/bundle/
 /flatpak/flathub/build/
 /flatpak/flathub/repo/
 /flatpak/flathub/.flatpak-builder/
+# CocoIndex Code (ccc)
+/.cocoindex_code/
