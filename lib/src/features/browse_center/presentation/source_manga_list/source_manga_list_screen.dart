@@ -12,6 +12,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../../../constants/app_sizes.dart';
 import '../../../../constants/db_keys.dart';
 import '../../../../routes/router_config.dart';
+import '../../../../utils/entry_page_index.dart';
 import '../../../../utils/extensions/custom_extensions.dart';
 import '../../../../utils/hooks/paging_controller_hook.dart';
 import '../../../../utils/motion/reduce_motion.dart';
@@ -143,6 +144,14 @@ class SourceMangaListScreen extends HookConsumerWidget {
       firstPageKey: 1,
       // Read per request because endpoint switches dispose the previous client.
       fetchPage: (pageKey) async {
+        // A fresh first source page means the result set changed (search
+        // query, filters, refresh or a route change) — restart the display
+        // at page 1.
+        if (pageKey == 1) {
+          ref
+              .read(entryPageIndexProvider.notifier)
+              .setPage('browse-$sourceId', 1);
+        }
         final repository = ref.read(sourceRepositoryProvider);
         final hideLibraryEntries = ref.read(
           webUiBoolProvider('hideLibraryEntries'),

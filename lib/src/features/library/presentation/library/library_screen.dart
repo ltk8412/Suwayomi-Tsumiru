@@ -16,12 +16,14 @@ import 'package:material_ui/material_ui.dart';
 import '../../../../constants/app_sizes.dart';
 import '../../../../constants/enum.dart';
 import '../../../../routes/router_config.dart';
+import '../../../../utils/entry_page_index.dart';
 import '../../../../utils/extensions/custom_extensions.dart';
 import '../../../../utils/misc/toast/toast.dart';
 import '../../../../utils/motion/reduce_motion.dart';
 import '../../../../widgets/desktop/desktop_page_frame.dart';
 import '../../../../widgets/desktop/desktop_top_bar.dart';
 import '../../../../widgets/emoticons.dart';
+import '../../../../widgets/paginated_entries.dart';
 import '../../../../widgets/search_field.dart';
 import '../../../../widgets/shell/update_banner_state.dart';
 import '../../../../widgets/touch_tab_pager.dart';
@@ -46,6 +48,7 @@ import 'controller/library_grouping.dart';
 import 'controller/library_manga_list.dart';
 import 'widgets/category_tab_strip.dart';
 import 'widgets/desktop_library_toolbar.dart';
+import 'widgets/library_entry_layout.dart';
 import 'widgets/library_manga_grid_view.dart';
 import 'widgets/library_manga_organizer.dart';
 import 'widgets/library_random_entry.dart';
@@ -122,10 +125,11 @@ Widget _groupedBody({
                   behavior: ScrollConfiguration.of(
                     context,
                   ).copyWith(scrollbars: false),
-                  child: TouchTabPager(children: tabs),
+                  child: TouchTabPager(swipeable: false, children: tabs),
                 );
               }
               return TouchTabPager(
+                swipeable: false,
                 children: [for (final tab in tabs) _TabScrollHost(child: tab)],
               );
             },
@@ -1422,7 +1426,7 @@ class _PagedSection extends ConsumerWidget {
   }
 }
 
-class _GroupedMangaList extends ConsumerWidget {
+class _GroupedMangaList extends HookConsumerWidget {
   const _GroupedMangaList({super.key, required this.tabId});
   final int tabId;
 
@@ -1431,6 +1435,28 @@ class _GroupedMangaList extends ConsumerWidget {
     final mangaListAsync = ref.watch(
       groupedMangaListWithQueryAndFilterProvider(tabId: tabId),
     );
+
+    // Reset to page 1 when the debounced query or the global filter/sort
+    // options change; the mount run is skipped so a remembered page survives
+    // tab switches.
+    final debouncedQuery = ref.watch(libraryQueryDebouncedProvider);
+    final options = ref.watch(effectiveCategoryLibraryOptionsProvider(null));
+    final isFirstPageReset = useRef(true);
+    useEffect(() {
+      if (isFirstPageReset.value) {
+        isFirstPageReset.value = false;
+        return;
+      }
+      // Effects run during build, when provider mutation is forbidden.
+      Future.microtask(() {
+        if (!context.mounted) return;
+        final notifier = ref.read(entryPageIndexProvider.notifier);
+        if (notifier.pageFor('group-$tabId') != 1) {
+          notifier.setPage('group-$tabId', 1);
+        }
+      });
+      return;
+    }, [debouncedQuery, options]);
 
     return mangaListAsync.showUiWhenData(
       context,
@@ -1441,25 +1467,42 @@ class _GroupedMangaList extends ConsumerWidget {
           return Emoticons(title: context.l10n.noCategoryMangaFound);
         }
         final items = data;
-        return RefreshIndicator(
-          // Grouped tabs have no single category; pull checks the whole library.
-          onRefresh: () async {
-            ref.read(updateOptimisticProvider.notifier).arm();
-            unawaited(
-              ref
-                  .read(updatesRepositoryProvider)
-                  .fetchUpdates()
-                  .catchError((Object _) {}),
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final layout = libraryEntryLayout(
+              context,
+              ref,
+              constraints.maxWidth,
             );
-            // Refresh categories too, since another client can add them between launches.
-            ref.invalidate(categoryControllerProvider);
-            ref.invalidate(libraryMangaListProvider);
-            await ref.read(libraryMangaListProvider.future);
+            return PaginatedEntries(
+              pageKey: 'group-$tabId',
+              blocks: [(start: 0, count: items.length, headerExtent: 0.0)],
+              columns: layout.columns,
+              rowExtent: layout.rowExtent,
+              rowSpacing: layout.rowSpacing,
+              pageBuilder: (context, start, end) => RefreshIndicator(
+                // Grouped tabs have no single category; pull checks the whole library.
+                onRefresh: () async {
+                  ref.read(updateOptimisticProvider.notifier).arm();
+                  unawaited(
+                    ref
+                        .read(updatesRepositoryProvider)
+                        .fetchUpdates()
+                        .catchError((Object _) {}),
+                  );
+                  // Refresh categories too, since another client can add them between launches.
+                  ref.invalidate(categoryControllerProvider);
+                  ref.invalidate(libraryMangaListProvider);
+                  await ref.read(libraryMangaListProvider.future);
+                },
+                child: LibraryMangaGridView(
+                  items: items.sublist(start, end),
+                  onOpen: (manga) =>
+                      MangaRoute(mangaId: manga.id).push(context),
+                ),
+              ),
+            );
           },
-          child: LibraryMangaGridView(
-            items: items,
-            onOpen: (manga) => MangaRoute(mangaId: manga.id).push(context),
-          ),
         );
       },
       refresh: () {

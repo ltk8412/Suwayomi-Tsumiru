@@ -9,7 +9,9 @@ import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../../../constants/app_sizes.dart';
+import '../../../../../constants/db_keys.dart';
 import '../../../../../routes/router_config.dart';
+import '../../../../../utils/entry_pagination.dart';
 import '../../../../../utils/extensions/custom_extensions.dart';
 import '../../../../../utils/misc/app_utils.dart';
 import '../../../../../utils/webui_meta/webui_settings.dart';
@@ -18,6 +20,7 @@ import '../../../../../widgets/desktop/desktop_page_frame.dart';
 import '../../../../../widgets/emoticons.dart';
 import '../../../../../widgets/inline_retry_row.dart';
 import '../../../../../widgets/manga_cover/grid/manga_cover_grid_tile.dart';
+import '../../../../../widgets/paginated_entries.dart';
 import '../../../../manga_book/domain/manga/manga_model.dart';
 import '../../../../settings/presentation/appearance/widgets/grid_cover_width_slider/grid_cover_width_slider.dart';
 import '../../../domain/source/source_model.dart';
@@ -49,77 +52,134 @@ class SourceMangaGridView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final gridMinWidth =
+        ref.watch(gridMinWidthProvider) ??
+        DBKeys.gridMangaCoverMinWidth.initial as double;
     final view = PagingListener(
       controller: controller,
-      builder: (context, state, fetchNextPage) => PagedGridView(
-        state: state.copyWith(
-          pages: state.pages
-              ?.map(
-                (page) => visibleSourceMangas(
-                  page,
-                  hideLibraryEntries: ref.watch(
-                    webUiBoolProvider('hideLibraryEntries'),
-                  ),
-                ),
-              )
-              .toList(),
-        ),
-        fetchNextPage: fetchNextPage,
-        showNewPageErrorIndicatorAsGridChild: false,
-        builderDelegate: PagedChildBuilderDelegate<MangaDto>(
-          firstPageProgressIndicatorBuilder: (context) =>
-              const CenterTsumiruShimmerIndicator(),
-          newPageProgressIndicatorBuilder: (context) =>
-              const CenterTsumiruShimmerIndicator(),
-          newPageErrorIndicatorBuilder: (context) => InlineRetryRow(
-            message: state.error.toString(),
-            onRetry: fetchNextPage,
-          ),
-          firstPageErrorIndicatorBuilder: (context) => Emoticons(
-            title: state.error.toString(),
-            button: TextButton(
-              onPressed: () => controller.refresh(),
-              child: Text(context.l10n.retry),
-            ),
-          ),
-          noItemsFoundIndicatorBuilder: (context) => Emoticons(
+      builder: (context, state, fetchNextPage) {
+        // Filter per page exactly like the old grid did so hidden library
+        // entries never count toward the display window.
+        final hideLibraryEntries = ref.watch(
+          webUiBoolProvider('hideLibraryEntries'),
+        );
+        final items = [
+          for (final page in state.pages ?? const <List<MangaDto>>[])
+            ...visibleSourceMangas(page, hideLibraryEntries: hideLibraryEntries),
+        ];
+        final error = state.error;
+        if (items.isEmpty) {
+          if (error != null) {
+            return Emoticons(
+              title: error.toString(),
+              button: TextButton(
+                onPressed: () => controller.refresh(),
+                child: Text(context.l10n.retry),
+              ),
+            );
+          }
+          // Nothing fetched yet (first page still loading or just reset).
+          if (state.pages == null) {
+            return const CenterTsumiruShimmerIndicator();
+          }
+          return Emoticons(
             title: context.l10n.noMangaFound,
             button: TextButton(
               onPressed: () => controller.refresh(),
               child: Text(context.l10n.refresh),
             ),
-          ),
-          itemBuilder: (context, item, index) {
-            final tile = MangaCoverGridTile(
-              manga: item,
-              selected: selectedIds.contains(item.id),
-              showSelectedCheck: !context.usesDesktopShell,
-              showDarkOverlay: item.user.inLibrary.ifNull(),
-              linkLocation: MangaRoute(mangaId: item.id).location,
-              onLongPress: () => onToggleSelection(item.id),
-              onPressed: () =>
-                  selecting ||
-                      (context.usesDesktopShell &&
-                          AppUtils.isMultiSelectPressed())
-                  ? onToggleSelection(item.id)
-                  : MangaRoute(mangaId: item.id).push(context),
+          );
+        }
+        // The server page size is fixed; display pages are windows over the
+        // buffered entries sized to fit this surface.
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final layout = coverGridPageLayout(
+              width: constraints.maxWidth,
+              coverMinWidth: gridMinWidth,
+              fixedColumns: 0,
+              titleExtent: 0,
+              crossAxisSpacing: 2.0,
             );
-            if (!context.usesDesktopShell) {
-              return tile;
-            }
-            return DesktopSourceCoverTile(
-              manga: item,
-              selecting: selecting,
-              selected: selectedIds.contains(item.id),
-              onToggleSelection: () => onToggleSelection(item.id),
-              onAddToLibrary: onAddToLibrary,
-              addEnabled: addEnabled,
-              child: tile,
+            return PaginatedEntries(
+              pageKey: 'browse-$sourceId',
+              blocks: [(start: 0, count: items.length, headerExtent: 0.0)],
+              columns: layout.columns,
+              rowExtent: layout.rowExtent,
+              rowSpacing: 2.0,
+              hasNextPage: state.hasNextPage,
+              onLoadMore: fetchNextPage,
+              pageBuilder: (context, start, end) {
+                final grid = CustomScrollView(
+                  slivers: [
+                    SliverGrid(
+                      gridDelegate: mangaCoverGridDelegate(gridMinWidth),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final item = items[start + index];
+                          final tile = MangaCoverGridTile(
+                            manga: item,
+                            selected: selectedIds.contains(item.id),
+                            showSelectedCheck: !context.usesDesktopShell,
+                            showDarkOverlay: item.user.inLibrary.ifNull(),
+                            linkLocation: MangaRoute(mangaId: item.id).location,
+                            onLongPress: () => onToggleSelection(item.id),
+                            onPressed: () =>
+                                selecting ||
+                                    (context.usesDesktopShell &&
+                                        AppUtils.isMultiSelectPressed())
+                                ? onToggleSelection(item.id)
+                                : MangaRoute(mangaId: item.id).push(context),
+                          );
+                          if (!context.usesDesktopShell) return tile;
+                          return DesktopSourceCoverTile(
+                            manga: item,
+                            selecting: selecting,
+                            selected: selectedIds.contains(item.id),
+                            onToggleSelection: () => onToggleSelection(item.id),
+                            onAddToLibrary: onAddToLibrary,
+                            addEnabled: addEnabled,
+                            child: tile,
+                          );
+                        },
+                        childCount: end - start,
+                      ),
+                    ),
+                  ],
+                );
+                // Overlays sit at the bottom of the page area, directly above
+                // the pager bar, without disturbing the window layout.
+                final pageError = state.error;
+                final filling = state.isLoading;
+                if (pageError == null && !filling) return grid;
+                return Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    grid,
+                    if (pageError != null)
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        child: InlineRetryRow(
+                          message: pageError.toString(),
+                          onRetry: fetchNextPage,
+                        ),
+                      ),
+                    if (filling)
+                      const Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        child: Center(child: MiniCircularProgressIndicator()),
+                      ),
+                  ],
+                );
+              },
             );
           },
-        ),
-        gridDelegate: mangaCoverGridDelegate(ref.watch(gridMinWidthProvider)),
-      ),
+        );
+      },
     );
     return DesktopBoxBleed(start: kMangaCoverCardInset / 2, child: view);
   }

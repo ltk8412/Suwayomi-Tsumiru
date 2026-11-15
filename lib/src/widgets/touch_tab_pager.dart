@@ -10,10 +10,19 @@ import 'package:material_ui/material_ui.dart';
 import '../utils/theme/brand.dart';
 
 class TouchTabPager extends StatelessWidget {
-  const TouchTabPager({super.key, required this.children, this.controller});
+  const TouchTabPager({
+    super.key,
+    required this.children,
+    this.controller,
+    this.swipeable = true,
+  });
 
   final List<Widget> children;
   final TabController? controller;
+
+  /// When false, horizontal swipes never change tabs (e.g. so a page-flip
+  /// gesture owns them), regardless of the brand's flat setting.
+  final bool swipeable;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +35,7 @@ class TouchTabPager extends StatelessWidget {
       child: TabBarView(
         controller: controller,
         // E-ink: no swipe slide between categories — switch by tapping the tab.
-        physics: flat
+        physics: !swipeable || flat
             ? const NeverScrollableScrollPhysics()
             : const PageScrollPhysics(),
         children: [

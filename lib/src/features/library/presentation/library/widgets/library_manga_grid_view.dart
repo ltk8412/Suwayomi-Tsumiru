@@ -45,6 +45,9 @@ class LibraryMangaGridView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => CustomScrollView(
+    // Paginated pages fit the viewport exactly, so the scroll view must stay
+    // draggable for pull-to-refresh.
+    physics: const AlwaysScrollableScrollPhysics(),
     slivers: [
       LibraryMangaSliver(
         items: items,
