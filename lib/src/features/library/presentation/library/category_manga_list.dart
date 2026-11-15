@@ -13,12 +13,14 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../../graphql/__generated__/schema.graphql.dart';
 import '../../../../routes/router_config.dart';
+import '../../../../utils/entry_page_index.dart';
 import '../../../../utils/extensions/custom_extensions.dart';
 import '../../../../utils/misc/toast/toast.dart';
 import '../../../../utils/motion/reduce_motion.dart';
 import '../../../../widgets/confirm_bulk_download_dialog.dart';
 import '../../../../widgets/download_presets_menu.dart';
 import '../../../../widgets/emoticons.dart';
+import '../../../../widgets/paginated_entries.dart';
 import '../../../../widgets/popup_widgets/confirm_action.dart';
 import '../../../../widgets/selection_action_bar.dart';
 import '../../../../widgets/shell/update_banner_state.dart';
@@ -44,9 +46,11 @@ import '../../../offline/presentation/keep_rule_picker.dart';
 import '../../../offline/presentation/offline_action_confirmations.dart';
 import '../../../offline/presentation/offline_view_loading.dart';
 import '../../../tracking/domain/track_progress_gate.dart';
+import 'controller/category_library_options.dart';
 import 'controller/library_controller.dart';
 import 'controller/library_manga_list.dart';
 import 'widgets/edit_mangas_category_dialog.dart';
+import 'widgets/library_entry_layout.dart';
 import 'widgets/library_manga_grid_view.dart';
 
 List<int> serverDownloadIds(
@@ -91,6 +95,30 @@ class CategoryMangaList extends HookConsumerWidget {
       }
       return;
     }, []);
+
+    // Reset to page 1 when the debounced query or the filter/sort options
+    // change; the mount run is skipped so a remembered page survives tab
+    // switches.
+    final debouncedQuery = ref.watch(libraryQueryDebouncedProvider);
+    final options = ref.watch(
+      effectiveCategoryLibraryOptionsProvider(categoryId),
+    );
+    final isFirstPageReset = useRef(true);
+    useEffect(() {
+      if (isFirstPageReset.value) {
+        isFirstPageReset.value = false;
+        return;
+      }
+      // Effects run during build, when provider mutation is forbidden.
+      Future.microtask(() {
+        if (!context.mounted) return;
+        final notifier = ref.read(entryPageIndexProvider.notifier);
+        if (notifier.pageFor('cat-$categoryId') != 1) {
+          notifier.setPage('cat-$categoryId', 1);
+        }
+      });
+      return;
+    }, [debouncedQuery, options]);
 
     final selection = useState<Set<int>>(const {});
     final selecting = selection.value.isNotEmpty;
@@ -197,298 +225,310 @@ class CategoryMangaList extends HookConsumerWidget {
           );
         }
         final items = data!;
-        final Widget grid = LibraryMangaGridView(
-          items: items,
-          selection: selection.value,
-          onOpen: open,
-          onLongPress: (manga) => toggle(manga.id),
-          linkLocationFor: (manga) =>
-              MangaRoute(mangaId: manga.id, categoryId: categoryId).location,
-        );
-
-        final list = RefreshIndicator(
-          // The spinner waits for the immediate re-read; update completion triggers another refresh.
-          onRefresh: () async {
-            // Only a user gesture may clear the offline pin, never the mount effect.
-            ref.read(viewOfflineNowProvider.notifier).set(false);
-            ref.read(serverUnreachableProvider.notifier).set(false);
-            ref.read(updateOptimisticProvider.notifier).arm();
-            unawaited(
-              ref
-                  .read(updatesRepositoryProvider)
-                  .fetchUpdates(categoryId: categoryId)
-                  .catchError((Object _) {}),
-            );
-            ref.invalidate(libraryMangaListProvider);
-            await ref.read(libraryMangaListProvider.future);
-          },
-          child: grid,
-        );
-
         return PopScope(
           canPop: !selecting,
           onPopInvokedWithResult: (didPop, _) {
             if (!didPop) selection.value = const {};
           },
-          child: Stack(
-            children: [
-              list,
-              if (selecting)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: _SelectionBar(
-                    count: selection.value.length,
-                    onSelectAll: () =>
-                        selection.value = {for (final m in items) m.id},
-                    onClear: () => selection.value = const {},
-                    onMarkRead: () => markSelection(true),
-                    onMarkUnread: () => markSelection(false),
-                    onKeepOffline: !canDownload
-                        ? null
-                        : () async {
-                            final current = ref
-                                .read(authCredentialsStoreProvider.notifier)
-                                .captureSession();
-                            final ids = selection.value.toList();
-                            // Capture the container while context is mounted, before opening dialogs.
-                            final container = ProviderScope.containerOf(
-                              context,
-                              listen: false,
-                            );
-                            final picked = await pickOfflineKeepRule(context);
-                            if (picked == null) return;
-
-                            if (picked.remove) {
-                              if (!context.mounted) return;
-                              final ok =
-                                  await showDialog<bool>(
-                                    context: context,
-                                    builder: (ctx) => AlertDialog(
-                                      icon: Icon(
-                                        FluentIcons.delete_24_regular,
-                                        color: ctx.theme.colorScheme.error,
-                                      ),
-                                      title: Text(
-                                        ctx.l10n.manageDownloadsStopDelete,
-                                      ),
-                                      content: Text(
-                                        ctx.l10n.manageDownloadsDeleteConfirm(
-                                          ids.length,
-                                        ),
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(ctx, false),
-                                          child: Text(ctx.l10n.cancel),
-                                        ),
-                                        FilledButton(
-                                          style: FilledButton.styleFrom(
-                                            backgroundColor:
-                                                ctx.theme.colorScheme.error,
-                                          ),
-                                          onPressed: () =>
-                                              Navigator.pop(ctx, true),
-                                          child: Text(ctx.l10n.delete),
-                                        ),
-                                      ],
-                                    ),
-                                    animationStyle: context.motionStyle,
-                                  ) ??
-                                  false;
-                              if (!ok || !current()) return;
-                              selection.value = const {};
-                              for (final id in ids) {
-                                if (!current()) return;
-                                await removeKeepRuleAndDelete(ref, id);
-                              }
-                              return;
-                            }
-
-                            if (!await confirmKeepRuleChanges(
-                                  ref,
-                                  ids,
-                                  picked.rule,
-                                  picked.count,
-                                ) ||
-                                !context.mounted ||
-                                !current()) {
-                              return;
-                            }
-                            if (picked.rule == OfflineKeepRule.off) {
-                              // changeKeepRule also rewrites background work; bare setKeepRule leaves downloads scheduled.
-                              if (!current()) return;
-                              selection.value = const {};
-                              for (final id in ids) {
-                                if (!current()) return;
-                                await changeKeepRule(
-                                  ref,
-                                  id,
-                                  OfflineKeepRule.off,
-                                  5,
-                                );
-                              }
-                              return;
-                            }
-
-                            if (ids.length > 1 &&
-                                context.mounted &&
-                                !await confirmBulkDownload(
-                                  context,
-                                  summary: '${ids.length} series',
-                                  toDevice: true,
-                                )) {
-                              return;
-                            }
-                            if (!context.mounted || !current()) return;
-                            selection.value = const {};
-                            ref
-                                .read(accountPermissionGuardProvider)
-                                .require(Enum$UserPermission.DOWNLOAD_CHAPTERS);
-                            final db = ref.read(offlineDatabaseProvider);
-                            final sync = ref.read(offlineSyncProvider);
-                            final runtime = ref.read(
-                              offlineRuntimeStorageProvider.notifier,
-                            );
-                            // setKeepRule only updates existing rows; mirror selected manga before setting their rules.
-                            final selected = items
-                                .where((m) => ids.contains(m.id))
-                                .toList();
-                            for (final manga in selected) {
-                              if (!current()) return;
-                              await runtime.track(() async {
-                                await sync?.syncManga(
-                                  manga,
-                                  fetchedAtGen: sync.syncGeneration,
-                                );
-                                await db.setKeepRule(
-                                  manga.id,
-                                  picked.rule,
-                                  picked.count,
-                                );
-                              });
-                            }
-                            if (!current()) return;
-                            // Refresh serverIsDownloaded before reconciliation so downloads take the correct server/device route.
-                            unawaited(
-                              syncAndReconcileMangaSet(
-                                container,
-                                ids.toSet(),
-                                userInitiated: true,
-                              ),
-                            );
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Keeping ${ids.length} series offline',
-                                  ),
-                                ),
-                                snackBarAnimationStyle:
-                                    context.snackBarMotionStyle,
-                              );
-                            }
-                          },
-                    onDownloadToServer: !canDownload
-                        ? null
-                        : (preset) async {
-                            final current = ref
-                                .read(authCredentialsStoreProvider.notifier)
-                                .captureSession();
-                            final ids = selection.value.toList();
-                            final library =
-                                ref.read(libraryMangaListProvider).value ??
-                                items;
-                            final preferences = {
-                              for (final manga in library)
-                                if (ids.contains(manga.id))
-                                  manga.id: manga
-                                      .metaData
-                                      .effectivePreferredScanlators,
-                            };
-                            if (ids.length > 1 &&
-                                !await confirmBulkDownload(
-                                  context,
-                                  summary: '${ids.length} series',
-                                  toDevice: false,
-                                  downloadDescription: context.l10n
-                                      .bulkDownloadPresetDescription(
-                                        downloadPresetLabel(context, preset),
-                                      ),
-                                )) {
-                              return;
-                            }
-                            if (!context.mounted || !current()) return;
-                            selection.value = const {};
-                            final repo = ref.read(mangaBookRepositoryProvider);
-                            final dl = ref.read(downloadsRepositoryProvider);
-                            if (!context.mounted || !current()) return;
-                            var queuedAny = false;
-                            final result = await AsyncValue.guard(() async {
-                              for (final id in ids) {
-                                if (!context.mounted || !current()) return;
-                                final chapters = await repo.getChapterList(id);
-                                if (!context.mounted || !current()) return;
-                                final chapterIds = serverDownloadIds(
-                                  chapters,
-                                  preset: preset,
-                                  preferredScanlators:
-                                      preferences[id] ?? const [],
-                                );
-                                if (chapterIds.isNotEmpty) {
-                                  await dl.addChaptersBatchToDownloadQueue(
-                                    chapterIds,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final layout = libraryEntryLayout(
+                context,
+                ref,
+                constraints.maxWidth,
+              );
+              return PaginatedEntries(
+                pageKey: 'cat-$categoryId',
+                blocks: [(start: 0, count: items.length, headerExtent: 0.0)],
+                columns: layout.columns,
+                rowExtent: layout.rowExtent,
+                rowSpacing: layout.rowSpacing,
+                pageBuilder: (context, start, end) => Stack(
+                  children: [
+                    RefreshIndicator(
+                      // The spinner waits for the immediate re-read; update completion triggers another refresh.
+                      onRefresh: () async {
+                        // Only a user gesture may clear the offline pin, never the mount effect.
+                        ref.read(viewOfflineNowProvider.notifier).set(false);
+                        ref.read(serverUnreachableProvider.notifier).set(false);
+                        ref.read(updateOptimisticProvider.notifier).arm();
+                        unawaited(
+                          ref
+                              .read(updatesRepositoryProvider)
+                              .fetchUpdates(categoryId: categoryId)
+                              .catchError((Object _) {}),
+                        );
+                        ref.invalidate(libraryMangaListProvider);
+                        await ref.read(libraryMangaListProvider.future);
+                      },
+                      child: LibraryMangaGridView(
+                        items: items.sublist(start, end),
+                        selection: selection.value,
+                        onOpen: open,
+                        onLongPress: (manga) => toggle(manga.id),
+                        linkLocationFor: (manga) =>
+                            MangaRoute(mangaId: manga.id, categoryId: categoryId).location,
+                      ),
+                    ),
+                    if (selecting)
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        child: _SelectionBar(
+                          count: selection.value.length,
+                          onSelectAll: () =>
+                              selection.value = {for (final m in items) m.id},
+                          onClear: () => selection.value = const {},
+                          onMarkRead: () => markSelection(true),
+                          onMarkUnread: () => markSelection(false),
+                          onKeepOffline: !canDownload
+                              ? null
+                              : () async {
+                                  final current = ref
+                                      .read(authCredentialsStoreProvider.notifier)
+                                      .captureSession();
+                                  final ids = selection.value.toList();
+                                  // Capture the container while context is mounted, before opening dialogs.
+                                  final container = ProviderScope.containerOf(
+                                    context,
+                                    listen: false,
                                   );
-                                  queuedAny = true;
-                                }
-                              }
-                            });
-                            if (!context.mounted || !current()) return;
-                            if (result.hasError) {
-                              result.showToastOnError(ref.read(toastProvider));
-                              return;
-                            }
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  queuedAny
-                                      ? 'Downloading ${ids.length} series to server'
-                                      : context.l10n.nothingToDownload,
-                                ),
-                              ),
-                              snackBarAnimationStyle:
-                                  context.snackBarMotionStyle,
+                                  final picked = await pickOfflineKeepRule(context);
+                                  if (picked == null) return;
+
+                                  if (picked.remove) {
+                                    if (!context.mounted) return;
+                                    final ok =
+                                        await showDialog<bool>(
+                                          context: context,
+                                          builder: (ctx) => AlertDialog(
+                                            icon: Icon(
+                                              FluentIcons.delete_24_regular,
+                                              color: ctx.theme.colorScheme.error,
+                                            ),
+                                            title: Text(
+                                              ctx.l10n.manageDownloadsStopDelete,
+                                            ),
+                                            content: Text(
+                                              ctx.l10n.manageDownloadsDeleteConfirm(
+                                                ids.length,
+                                              ),
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.pop(ctx, false),
+                                                child: Text(ctx.l10n.cancel),
+                                              ),
+                                              FilledButton(
+                                                style: FilledButton.styleFrom(
+                                                  backgroundColor:
+                                                      ctx.theme.colorScheme.error,
+                                                ),
+                                                onPressed: () =>
+                                                    Navigator.pop(ctx, true),
+                                                child: Text(ctx.l10n.delete),
+                                              ),
+                                            ],
+                                          ),
+                                          animationStyle: context.motionStyle,
+                                        ) ??
+                                        false;
+                                    if (!ok || !current()) return;
+                                    selection.value = const {};
+                                    for (final id in ids) {
+                                      if (!current()) return;
+                                      await removeKeepRuleAndDelete(ref, id);
+                                    }
+                                    return;
+                                  }
+
+                                  if (!await confirmKeepRuleChanges(
+                                        ref,
+                                        ids,
+                                        picked.rule,
+                                        picked.count,
+                                      ) ||
+                                      !context.mounted ||
+                                      !current()) {
+                                    return;
+                                  }
+                                  if (picked.rule == OfflineKeepRule.off) {
+                                    // changeKeepRule also rewrites background work; bare setKeepRule leaves downloads scheduled.
+                                    if (!current()) return;
+                                    selection.value = const {};
+                                    for (final id in ids) {
+                                      if (!current()) return;
+                                      await changeKeepRule(
+                                        ref,
+                                        id,
+                                        OfflineKeepRule.off,
+                                        5,
+                                      );
+                                    }
+                                    return;
+                                  }
+
+                                  if (ids.length > 1 &&
+                                      context.mounted &&
+                                      !await confirmBulkDownload(
+                                        context,
+                                        summary: '${ids.length} series',
+                                        toDevice: true,
+                                      )) {
+                                    return;
+                                  }
+                                  if (!context.mounted || !current()) return;
+                                  selection.value = const {};
+                                  ref
+                                      .read(accountPermissionGuardProvider)
+                                      .require(Enum$UserPermission.DOWNLOAD_CHAPTERS);
+                                  final db = ref.read(offlineDatabaseProvider);
+                                  final sync = ref.read(offlineSyncProvider);
+                                  final runtime = ref.read(
+                                    offlineRuntimeStorageProvider.notifier,
+                                  );
+                                  // setKeepRule only updates existing rows; mirror selected manga before setting their rules.
+                                  final selected = items
+                                      .where((m) => ids.contains(m.id))
+                                      .toList();
+                                  for (final manga in selected) {
+                                    if (!current()) return;
+                                    await runtime.track(() async {
+                                      await sync?.syncManga(
+                                        manga,
+                                        fetchedAtGen: sync.syncGeneration,
+                                      );
+                                      await db.setKeepRule(
+                                        manga.id,
+                                        picked.rule,
+                                        picked.count,
+                                      );
+                                    });
+                                  }
+                                  if (!current()) return;
+                                  // Refresh serverIsDownloaded before reconciliation so downloads take the correct server/device route.
+                                  unawaited(
+                                    syncAndReconcileMangaSet(
+                                      container,
+                                      ids.toSet(),
+                                      userInitiated: true,
+                                    ),
+                                  );
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Keeping ${ids.length} series offline',
+                                        ),
+                                      ),
+                                      snackBarAnimationStyle:
+                                          context.snackBarMotionStyle,
+                                    );
+                                  }
+                                },
+                          onDownloadToServer: !canDownload
+                              ? null
+                              : (preset) async {
+                                  final current = ref
+                                      .read(authCredentialsStoreProvider.notifier)
+                                      .captureSession();
+                                  final ids = selection.value.toList();
+                                  final library =
+                                      ref.read(libraryMangaListProvider).value ??
+                                      items;
+                                  final preferences = {
+                                    for (final manga in library)
+                                      if (ids.contains(manga.id))
+                                        manga.id: manga
+                                            .metaData
+                                            .effectivePreferredScanlators,
+                                  };
+                                  if (ids.length > 1 &&
+                                      !await confirmBulkDownload(
+                                        context,
+                                        summary: '${ids.length} series',
+                                        toDevice: false,
+                                        downloadDescription: context.l10n
+                                            .bulkDownloadPresetDescription(
+                                              downloadPresetLabel(context, preset),
+                                            ),
+                                      )) {
+                                    return;
+                                  }
+                                  if (!context.mounted || !current()) return;
+                                  selection.value = const {};
+                                  final repo = ref.read(mangaBookRepositoryProvider);
+                                  final dl = ref.read(downloadsRepositoryProvider);
+                                  if (!context.mounted || !current()) return;
+                                  var queuedAny = false;
+                                  final result = await AsyncValue.guard(() async {
+                                    for (final id in ids) {
+                                      if (!context.mounted || !current()) return;
+                                      final chapters = await repo.getChapterList(id);
+                                      if (!context.mounted || !current()) return;
+                                      final chapterIds = serverDownloadIds(
+                                        chapters,
+                                        preset: preset,
+                                        preferredScanlators:
+                                            preferences[id] ?? const [],
+                                      );
+                                      if (chapterIds.isNotEmpty) {
+                                        await dl.addChaptersBatchToDownloadQueue(
+                                          chapterIds,
+                                        );
+                                        queuedAny = true;
+                                      }
+                                    }
+                                  });
+                                  if (!context.mounted || !current()) return;
+                                  if (result.hasError) {
+                                    result.showToastOnError(ref.read(toastProvider));
+                                    return;
+                                  }
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        queuedAny
+                                            ? 'Downloading ${ids.length} series to server'
+                                            : context.l10n.nothingToDownload,
+                                      ),
+                                    ),
+                                    snackBarAnimationStyle:
+                                        context.snackBarMotionStyle,
+                                  );
+                                },
+                          onEditCategories: () async {
+                            final selected = items
+                                .where((m) => selection.value.contains(m.id))
+                                .toList();
+                            if (selected.isEmpty) return;
+                            selection.value = const {};
+                            await showDialog<void>(
+                              context: context,
+                              builder: (context) => selected.length == 1
+                                  ? EditMangaCategoryDialog(
+                                      mangaId: selected.first.id,
+                                      title: selected.first.title,
+                                    )
+                                  : EditMangasCategoryDialog(mangas: selected),
+                              animationStyle: context.motionStyle,
                             );
+                            refresh();
                           },
-                    onEditCategories: () async {
-                      final selected = items
-                          .where((m) => selection.value.contains(m.id))
-                          .toList();
-                      if (selected.isEmpty) return;
-                      selection.value = const {};
-                      await showDialog<void>(
-                        context: context,
-                        builder: (context) => selected.length == 1
-                            ? EditMangaCategoryDialog(
-                                mangaId: selected.first.id,
-                                title: selected.first.title,
-                              )
-                            : EditMangasCategoryDialog(mangas: selected),
-                        animationStyle: context.motionStyle,
-                      );
-                      refresh();
-                    },
-                    onMigrate: () {
-                      final ids = selection.value.toList();
-                      if (ids.isEmpty) return;
-                      selection.value = const {};
-                      startMigration(context, mangaIds: ids);
-                    },
-                  ),
+                          onMigrate: () {
+                            final ids = selection.value.toList();
+                            if (ids.isEmpty) return;
+                            selection.value = const {};
+                            startMigration(context, mangaIds: ids);
+                          },
+                        ),
+                      ),
+                  ],
                 ),
-            ],
+              );
+            },
           ),
         );
       },

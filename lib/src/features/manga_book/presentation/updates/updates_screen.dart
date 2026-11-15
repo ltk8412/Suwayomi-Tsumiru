@@ -5,7 +5,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -15,6 +14,8 @@ import 'package:material_ui/material_ui.dart';
 import '../../../../constants/app_sizes.dart';
 import '../../../../constants/db_keys.dart';
 import '../../../../routes/router_config.dart';
+import '../../../../utils/entry_page_index.dart';
+import '../../../../utils/entry_pagination.dart';
 import '../../../../utils/extensions/custom_extensions.dart';
 import '../../../../utils/hooks/paging_controller_hook.dart';
 import '../../../../utils/motion/reduce_motion.dart';
@@ -23,6 +24,7 @@ import '../../../../widgets/desktop/desktop_page_frame.dart';
 import '../../../../widgets/desktop/desktop_top_bar.dart';
 import '../../../../widgets/emoticons.dart';
 import '../../../../widgets/inline_retry_row.dart';
+import '../../../../widgets/paginated_entries.dart';
 import '../../../library/presentation/library/controller/library_controller.dart';
 import '../../../library/presentation/library/widgets/desktop_library_panels.dart';
 import '../../../library/presentation/library/widgets/desktop_library_toolbar.dart';
@@ -53,6 +55,35 @@ import 'widgets/updates_grid_card.dart';
 import 'widgets/updates_row_actions.dart';
 
 const _kUpdatesCardSubtitleExtent = 22.0;
+
+/// Rendered height of `_dateHeading`, charged against the page budget for
+/// every date heading (including the running heading of a mid-day page).
+///
+/// Phone: a one-line-title `ListTile` hits its default target tile height of
+/// 56 px (the `bodyLarge` title line of 24 px plus `minVerticalPadding` of
+/// 8 px per side stays below it). Desktop: the same 24 px text line inside
+/// the heading's 16+8 px contentPadding, i.e. 48 px. Budgeting the taller
+/// phone figure keeps pages inside the viewport on both shells.
+const kUpdatesDateHeadingExtent = 56.0;
+
+/// Nominal height of one `ChapterMangaListTile` row: 8 px vertical padding
+/// around the tallest common child — the 56×80 cover (a two-line title plus
+/// one-line chapter name column tops out at 76 px, under the cover).
+const _kUpdatesListTileExtent = 96.0;
+
+/// Nominal height of a collapsed `ChapterMangaGroupedTile`: the list row
+/// plus the head tile's "Show N more" line (2 px top padding + a 16 px label
+/// row) once a two-line title pushes the text column past the cover — 94 px
+/// of content plus 16 px padding.
+const _kUpdatesGroupedTileExtent = 110.0;
+
+/// Nominal height of an expanded `ChapterMangaGroupedTile`: the collapsed
+/// row plus two tail rows. A tail row is 6 px padding + ~24 px of content on
+/// phones and gains ~40 px of hover action buttons on the desktop shell, so
+/// the budget uses the taller desktop figure (~52 px per tail). Groups with
+/// more visible tails run taller; the page surface stays scrollable as the
+/// safety valve.
+const _kUpdatesExpandedGroupedTileExtent = 214.0;
 
 Widget _dateHeading(BuildContext context, String label, {bool first = false}) {
   final desktop = isOnDesktopPage(context);
@@ -238,26 +269,16 @@ class _UpdatesPagedListState extends State<_UpdatesPagedList> {
     final grouping = _groupingFor(state.pages);
     final items = grouping.items;
 
-    final isGrouped = widget.groupingMode != UpdatesGroupingMode.disabled;
-
-    if (isGrouped) {
+    if (widget.groupingMode != UpdatesGroupingMode.disabled) {
       // A missing head index is already rendered in its group, so suppress the row.
       final displayIndex = grouping.headIndex[flatIndex];
       if (displayIndex == null) return const SizedBox.shrink();
 
-      final group = grouping.groups[displayIndex];
-      final tile = _buildGroupTile(context, group, items);
-      return _wrapWithDateHeader(
-        context,
-        items,
-        flatIndex,
-        tile,
-        grouping.headerIndices,
-      );
+      return _buildGroupTile(context, grouping.groups[displayIndex], items);
     }
 
     final item = items[flatIndex];
-    final tile = ChapterMangaListTile(
+    return ChapterMangaListTile(
       chapterWithMangaDto: item,
       updatePair: () => _updatePair(item),
       refreshManga: () => _refreshManga(item.mangaId),
@@ -270,14 +291,6 @@ class _UpdatesPagedListState extends State<_UpdatesPagedList> {
       selectionAnchor: widget.selectionAnchor,
       orderedChapters: items,
       desktop: context.usesDesktopShell,
-    );
-    if (context.usesDesktopShell) return tile;
-    return _wrapWithDateHeader(
-      context,
-      items,
-      flatIndex,
-      tile,
-      grouping.headerIndices,
     );
   }
 
@@ -310,26 +323,26 @@ class _UpdatesPagedListState extends State<_UpdatesPagedList> {
     UpdatesGroupedEntry group,
     List<ChapterWithMangaDto> items,
   ) => UpdatesGridCard(
-      group: group,
-      refreshManga: () => _refreshManga(group.head.mangaId),
-      refreshRowActions: (mangaIds) =>
-          _refreshMangas(mangaIds, freshWins: true),
-      isSelectedFor: (chapter) =>
-          widget.selectedChapters.value.containsKey(chapter.id),
-      canTapSelect: widget.selectedChapters.value.isNotEmpty,
-      toggleSelect: (val) => _toggleSelect(val),
-      selectedChapters: widget.selectedChapters,
-      selectionAnchor: widget.selectionAnchor,
-      orderedChapters: items,
-    );
+    group: group,
+    refreshManga: () => _refreshManga(group.head.mangaId),
+    refreshRowActions: (mangaIds) => _refreshMangas(mangaIds, freshWins: true),
+    isSelectedFor: (chapter) =>
+        widget.selectedChapters.value.containsKey(chapter.id),
+    canTapSelect: widget.selectedChapters.value.isNotEmpty,
+    toggleSelect: (val) => _toggleSelect(val),
+    selectedChapters: widget.selectedChapters,
+    selectionAnchor: widget.selectionAnchor,
+    orderedChapters: items,
+  );
 
   Widget _wrapWithDateHeader(
     BuildContext context,
     List<ChapterWithMangaDto> items,
     int flatIndex,
     Widget tile,
-    Set<int> headerIndices,
-  ) {
+    Set<int> headerIndices, {
+    bool first = false,
+  }) {
     if (!headerIndices.contains(flatIndex)) return tile;
     final currentDate = int.tryParse(items[flatIndex].fetchedAt);
     return Column(
@@ -338,10 +351,52 @@ class _UpdatesPagedListState extends State<_UpdatesPagedList> {
         _dateHeading(
           context,
           currentDate.toDaysAgoFromSeconds(context),
+          first: first,
         ),
         tile,
       ],
     );
+  }
+
+  /// One block per day section: blocks split exactly where a display entry's
+  /// date heading renders — the same points `groupUpdatesByDay` starts a new
+  /// section — so grouped entries never split across pages and each heading
+  /// (including the running heading of a mid-day page) is charged against the
+  /// page height budget as [kUpdatesDateHeadingExtent].
+  static List<EntryBlock> _dayBlocks({
+    required List<ChapterWithMangaDto> items,
+    required Set<int> headerIndices,
+    required List<int> flatIndices,
+  }) {
+    bool hasHeading(int flat) =>
+        headerIndices.contains(flat) &&
+        int.tryParse(items[flat].fetchedAt) != null;
+    if (flatIndices.isEmpty) return const [];
+    final blocks = <EntryBlock>[];
+    var start = 0;
+    var header = hasHeading(flatIndices[0]) ? kUpdatesDateHeadingExtent : 0.0;
+    for (var i = 1; i < flatIndices.length; i++) {
+      if (!hasHeading(flatIndices[i])) continue;
+      blocks.add((start: start, count: i - start, headerExtent: header));
+      start = i;
+      header = kUpdatesDateHeadingExtent;
+    }
+    blocks.add((
+      start: start,
+      count: flatIndices.length - start,
+      headerExtent: header,
+    ));
+    return blocks;
+  }
+
+  /// The block strictly containing [index], or null when [index] sits on a
+  /// block boundary. Blocks are contiguous and ascending.
+  static EntryBlock? _blockContaining(List<EntryBlock> blocks, int index) {
+    for (final block in blocks) {
+      if (block.start >= index) return null;
+      if (index < block.start + block.count) return block;
+    }
+    return null;
   }
 
   @override
@@ -349,196 +404,261 @@ class _UpdatesPagedListState extends State<_UpdatesPagedList> {
     return PagingListener(
       controller: widget.controller,
       builder: (context, state, fetchNextPage) {
-        final delegate = PagedChildBuilderDelegate<ChapterWithMangaDto>(
-          firstPageProgressIndicatorBuilder: (context) =>
-              const CenterTsumiruShimmerIndicator(),
-          newPageProgressIndicatorBuilder: (context) => Row(
-            children: [
-              if (isOnDesktopPage(context))
-                const SizedBox(width: kListTilePadding),
-              SizedBox(
-                height: 80,
-                width: 80,
-                child: ClipRRect(
-                  borderRadius: KBorderRadius.r8.radius,
-                  child: const TsumiruShimmerIndicator(),
-                ),
+        final grouping = _groupingFor(state.pages);
+        final items = grouping.items;
+        final error = state.error;
+        if (items.isEmpty) {
+          if (error != null) {
+            return Emoticons(
+              title: error.toString(),
+              button: TextButton(
+                onPressed: widget.resetList,
+                child: Text(context.l10n.retry),
               ),
-            ],
-          ),
-          newPageErrorIndicatorBuilder: (context) => InlineRetryRow(
-            message: state.error.toString(),
-            onRetry: fetchNextPage,
-          ),
-          firstPageErrorIndicatorBuilder: (context) => Emoticons(
-            title: state.error.toString(),
-            button: TextButton(
-              onPressed: widget.resetList,
-              child: Text(context.l10n.retry),
-            ),
-          ),
-          noItemsFoundIndicatorBuilder: (context) => Emoticons(
+            );
+          }
+          // Nothing fetched yet (first page still loading or just reset).
+          if (state.pages == null) {
+            return const CenterTsumiruShimmerIndicator();
+          }
+          return Emoticons(
             title: context.l10n.noUpdatesFound,
             button: TextButton(
               onPressed: widget.resetList,
               child: Text(context.l10n.refresh),
             ),
-          ),
-          itemBuilder: (context, _, index) => _buildItem(context, state, index),
-        );
-        if (!context.usesDesktopShell) {
-          return PagedSliverList(
-            state: state,
-            fetchNextPage: fetchNextPage,
-            builderDelegate: delegate,
           );
         }
-        Widget desktopListing(
-          BuildContext context,
-          IndexedWidgetBuilder _,
-          int itemCount,
-          WidgetBuilder? indicatorBuilder,
-        ) {
-          final grouping = _groupingFor(state.pages);
-          final footer = SliverLayoutBuilder(
-            builder: (context, constraints) {
-              if (constraints.remainingCacheExtent > 0 &&
-                  state.hasNextPage &&
-                  !state.isLoading &&
-                  state.error == null) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (mounted && widget.controller.value == state) {
-                    fetchNextPage();
-                  }
-                });
-              }
-              return SliverToBoxAdapter(
-                child: indicatorBuilder?.call(context),
-              );
-            },
-          );
-          return SliverLayoutBuilder(
-            builder: (context, constraints) {
-              final builders = <WidgetBuilder>[];
-              void addHeading(int flatIndex) {
-                final first = flatIndex == 0 && !widget.lastUpdatedAboveList;
-                final label = int.tryParse(grouping.items[flatIndex].fetchedAt)
-                    .toDaysAgoFromSeconds(context);
-                builders.add(
-                  (context) => _dateHeading(context, label, first: first),
-                );
-              }
 
-              if (widget.displayMode == UpdatesDisplayMode.grid) {
-                final gridDelegate = mangaCoverUniformGridDelegate(
-                  widget.gridWidth,
-                  widget.fixedColumns,
-                  titleBelow: true,
-                  extraTitleExtent: _kUpdatesCardSubtitleExtent,
-                );
-                final bleed = isOnDesktopPage(context)
-                    ? kMangaCoverCardInset / 2
-                    : 0.0;
-                final layout = gridDelegate.getLayout(
-                  constraints.copyWith(
-                    crossAxisExtent: constraints.crossAxisExtent + bleed * 2,
-                  ),
-                ) as SliverGridRegularTileLayout;
-                for (final section in grouping.sections.values) {
-                  if (int.tryParse(
-                        grouping.items[section.headerFlatIndex].fetchedAt,
-                      ) !=
-                      null) {
-                    addHeading(section.headerFlatIndex);
-                  }
-                  for (
-                    var start = 0;
-                    start < section.groups.length;
-                    start += layout.crossAxisCount
-                  ) {
-                    final rowStart = start;
-                    final count = (section.groups.length - start).clamp(
-                      0,
-                      layout.crossAxisCount,
-                    );
-                    final first = start == 0;
-                    final gap = start + count < section.groups.length
-                        ? layout.mainAxisStride - layout.childMainAxisExtent
-                        : 0.0;
-                    builders.add(
-                      (context) => DesktopBoxBleed.coverGrid(
-                        child: Padding(
-                          padding: EdgeInsets.only(
-                            top: first ? 0 : bleed,
-                            bottom: gap,
-                          ),
-                          child: GridView.builder(
-                            padding: EdgeInsets.zero,
-                            primary: false,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            gridDelegate: gridDelegate,
-                            itemCount: count,
-                            itemBuilder: (context, index) => _buildGridCard(
-                              context,
-                              section.groups[rowStart + index],
-                              grouping.items,
-                            ),
-                          ),
-                        ),
+        // The compact shell has no display-mode control and always rendered
+        // the chapter list; only the desktop shell honours the setting.
+        final displayMode =
+            context.usesDesktopShell
+                ? widget.displayMode
+                : UpdatesDisplayMode.list;
+        // Grid renders one card per (manga, day) group; the list renders
+        // groups unless grouping is disabled.
+        final grouped =
+            displayMode == UpdatesDisplayMode.grid ||
+            widget.groupingMode != UpdatesGroupingMode.disabled;
+        final flatIndices = grouped
+            ? <int>[...grouping.headIndex.keys]
+            : <int>[for (var i = 0; i < items.length; i++) i];
+        // One block per day section: blocks split exactly where
+        // groupUpdatesByDay starts a new section — at the display entry whose
+        // date heading renders — so grouped entries never split across pages
+        // and every heading is charged against the page height budget.
+        final blocks = _dayBlocks(
+          items: items,
+          headerIndices: grouping.headerIndices,
+          flatIndices: flatIndices,
+        );
+
+        Widget buildPage(
+          BuildContext context,
+          int start,
+          int end,
+          int columns,
+        ) {
+          final builders = <WidgetBuilder>[];
+
+          bool hasHeading(int flat) =>
+              grouping.headerIndices.contains(flat) &&
+              int.tryParse(items[flat].fetchedAt) != null;
+          String labelFor(int flat) =>
+              int.tryParse(items[flat].fetchedAt).toDaysAgoFromSeconds(context);
+
+          // The heading at the very top of the page sits flush under the
+          // desktop page line (or the fixed last-updated line above the
+          // list); later headings keep their regular top padding.
+          bool topHeading() => builders.isEmpty && !widget.lastUpdatedAboveList;
+
+          // A page starting mid-day repeats that day's heading at the top.
+          final midDay = _blockContaining(blocks, start);
+          if (midDay != null &&
+              start > midDay.start &&
+              midDay.headerExtent > 0) {
+            final first = topHeading();
+            final headerFlat = flatIndices[midDay.start];
+            builders.add(
+              (context) =>
+                  _dateHeading(context, labelFor(headerFlat), first: first),
+            );
+          }
+
+          if (displayMode == UpdatesDisplayMode.grid) {
+            // The desktop listing's grid composition, scoped to the window:
+            // day headings as full-width rows, cover cards packed into rows
+            // that restart after every heading.
+            final gridDelegate = mangaCoverUniformGridDelegate(
+              widget.gridWidth,
+              widget.fixedColumns,
+              titleBelow: true,
+              extraTitleExtent: _kUpdatesCardSubtitleExtent,
+            );
+            final bleed = isOnDesktopPage(context)
+                ? kMangaCoverCardInset / 2
+                : 0.0;
+            var row = <int>[];
+            // Rows directly under a heading (or the page top) skip the
+            // inter-row top padding, like a section's first row did.
+            var firstRow = true;
+            void flushRow({required bool endOfSection}) {
+              if (row.isEmpty) return;
+              final rowStart = row.first;
+              final count = row.length;
+              builders.add(
+                (context) => DesktopBoxBleed.coverGrid(
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      top: firstRow ? 0 : bleed,
+                      bottom: endOfSection ? 0 : 2.0,
+                    ),
+                    child: GridView.builder(
+                      padding: EdgeInsets.zero,
+                      primary: false,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: gridDelegate,
+                      itemCount: count,
+                      itemBuilder: (context, index) => _buildGridCard(
+                        context,
+                        grouping.groups[grouping
+                            .headIndex[flatIndices[rowStart + index]]!],
+                        items,
                       ),
-                    );
-                  }
-                }
-              } else {
-                final grouped =
-                    widget.groupingMode != UpdatesGroupingMode.disabled;
-                final indices = grouped
-                    ? grouping.headIndex.keys
-                    : Iterable<int>.generate(itemCount);
-                for (final flatIndex in indices) {
-                  if (grouping.headerIndices.contains(flatIndex)) {
-                    addHeading(flatIndex);
-                  }
-                  if (grouped) {
-                    final group = grouping.groups[grouping.headIndex[flatIndex]!];
-                    builders.add(
-                      (context) =>
-                          _buildGroupTile(context, group, grouping.items),
-                    );
-                  } else {
-                    builders.add(
-                      (context) => _buildItem(context, state, flatIndex),
-                    );
-                  }
-                }
-              }
-              return SliverMainAxisGroup(
-                slivers: [
-                  SliverList.builder(
-                    itemCount: builders.length,
-                    itemBuilder: (context, index) => builders[index](context),
+                    ),
                   ),
-                  footer,
-                ],
+                ),
               );
-            },
+              row = <int>[];
+              firstRow = false;
+            }
+
+            for (var i = start; i < end; i++) {
+              final flat = flatIndices[i];
+              if (hasHeading(flat)) {
+                flushRow(endOfSection: true);
+                final first = topHeading();
+                builders.add(
+                  (context) =>
+                      _dateHeading(context, labelFor(flat), first: first),
+                );
+                firstRow = true;
+              }
+              row.add(i);
+              if (row.length >= columns) flushRow(endOfSection: false);
+            }
+            flushRow(endOfSection: true);
+          } else {
+            for (var i = start; i < end; i++) {
+              final flat = flatIndices[i];
+              final first = topHeading();
+              builders.add(
+                (context) => _wrapWithDateHeader(
+                  context,
+                  items,
+                  flat,
+                  _buildItem(context, state, flat),
+                  grouping.headerIndices,
+                  first: first,
+                ),
+              );
+            }
+          }
+
+          final page = CustomScrollView(
+            slivers: [
+              SliverList.builder(
+                itemCount: builders.length,
+                itemBuilder: (context, index) => builders[index](context),
+              ),
+            ],
+          );
+          // Fetch errors and fill-in progress sit at the bottom of the page
+          // area, directly above the pager bar.
+          final pageError = state.error;
+          final filling = state.isLoading;
+          if (pageError == null && !filling) return page;
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              page,
+              if (pageError != null)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: InlineRetryRow(
+                    message: pageError.toString(),
+                    onRetry: fetchNextPage,
+                  ),
+                ),
+              if (filling)
+                const Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Center(child: MiniCircularProgressIndicator()),
+                ),
+            ],
           );
         }
-        return PagedLayoutBuilder<int, ChapterWithMangaDto>(
-          state: state,
-          fetchNextPage: fetchNextPage,
-          builderDelegate: delegate,
-          layoutProtocol: PagedLayoutProtocol.sliver,
-          completedListingBuilder: desktopListing,
-          loadingListingBuilder: desktopListing,
-          errorListingBuilder: desktopListing,
+
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final int columns;
+            final double rowExtent;
+            final double rowSpacing;
+            if (displayMode == UpdatesDisplayMode.grid) {
+              // Mirror the width mangaCoverUniformGridDelegate lays out at:
+              // the page scroll view reserves the desktop scrollbar gutter,
+              // and each grid row bleeds kMangaCoverCardInset/2 past it on
+              // desktop pages. titleExtent matches titleBelow plus the card
+              // subtitle extent.
+              final bleed = isOnDesktopPage(context)
+                  ? kMangaCoverCardInset / 2
+                  : 0.0;
+              final gutter = desktopScrollReservesGutter(context)
+                  ? kDesktopScrollbarGutter
+                  : 0.0;
+              final layout = coverGridPageLayout(
+                width: constraints.maxWidth - gutter + bleed * 2,
+                coverMinWidth: widget.gridWidth,
+                fixedColumns: widget.fixedColumns,
+                titleExtent: kGridTitleExtent + _kUpdatesCardSubtitleExtent,
+              );
+              columns = layout.columns;
+              rowExtent = layout.rowExtent;
+              rowSpacing = 2.0;
+            } else {
+              columns = 1;
+              rowExtent = switch (widget.groupingMode) {
+                UpdatesGroupingMode.disabled => _kUpdatesListTileExtent,
+                UpdatesGroupingMode.collapsed => _kUpdatesGroupedTileExtent,
+                UpdatesGroupingMode.expanded =>
+                  _kUpdatesExpandedGroupedTileExtent,
+              };
+              rowSpacing = 0;
+            }
+            return PaginatedEntries(
+              pageKey: 'updates',
+              blocks: blocks,
+              columns: columns,
+              rowExtent: rowExtent,
+              rowSpacing: rowSpacing,
+              runningHeaderExtent: kUpdatesDateHeadingExtent,
+              hasNextPage: state.hasNextPage,
+              onLoadMore: fetchNextPage,
+              pageBuilder: (context, start, end) =>
+                  buildPage(context, start, end, columns),
+            );
+          },
         );
       },
     );
   }
 }
-
 
 /// Hold the autoDispose provider during refresh so an unobserved request cannot tear down mid-fetch.
 Future<ChapterDto?> refetchChapter(WidgetRef ref, int chapterId) async {
@@ -628,6 +748,8 @@ class UpdatesScreen extends HookConsumerWidget {
       generation.value++;
       selectedChapters.value = ({});
       selectionAnchor.value = null;
+      // Filter changes, refreshes and resyncs restart the display at page 1.
+      ref.read(entryPageIndexProvider.notifier).setPage('updates', 1);
       controller.refresh();
     }, []);
     // Custom covers arrive through meta the cached rows were fetched without.
@@ -977,25 +1099,24 @@ class UpdatesScreen extends HookConsumerWidget {
           Expanded(
             child: RefreshIndicator(
               onRefresh: () async => resetList(),
-              child: CustomScrollView(
-                slivers: [
-                  if (showLastUpdated)
-                    SliverToBoxAdapter(
-                      child: _lastUpdatedLine(context, lastUpdated),
+              child: Column(
+                children: [
+                  if (showLastUpdated) _lastUpdatedLine(context, lastUpdated),
+                  Expanded(
+                    child: _UpdatesPagedList(
+                      controller: controller,
+                      groupingMode: groupingMode,
+                      displayMode: displayMode,
+                      gridWidth: gridWidth,
+                      fixedColumns: fixedColumns,
+                      selectedChapters: selectedChapters,
+                      selectionAnchor: selectionAnchor,
+                      getGeneration: () => generation.value,
+                      screenContext: screenContext,
+                      resetList: resetList,
+                      refetchChapter: (id) => refetchChapter(ref, id),
+                      lastUpdatedAboveList: showLastUpdated,
                     ),
-                  _UpdatesPagedList(
-                    controller: controller,
-                    groupingMode: groupingMode,
-                    displayMode: displayMode,
-                    gridWidth: gridWidth,
-                    fixedColumns: fixedColumns,
-                    selectedChapters: selectedChapters,
-                    selectionAnchor: selectionAnchor,
-                    getGeneration: () => generation.value,
-                    screenContext: screenContext,
-                    resetList: resetList,
-                    refetchChapter: (id) => refetchChapter(ref, id),
-                    lastUpdatedAboveList: showLastUpdated,
                   ),
                 ],
               ),

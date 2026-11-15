@@ -2442,6 +2442,30 @@
       }
     }
   },
+  "pageXofY": "Page {current} of {total}",
+  "@pageXofY": {
+    "description": "Pager bar page indicator shown when the total page count is known",
+    "placeholders": {
+      "current": {
+        "type": "int",
+        "example": "2"
+      },
+      "total": {
+        "type": "int",
+        "example": "12"
+      }
+    }
+  },
+  "pageX": "Page {current}",
+  "@pageX": {
+    "description": "Pager bar page indicator shown while the total page count is unknown",
+    "placeholders": {
+      "current": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
   "parallelSourceRequest": "Parallel source requests",
   "password": "Password",
   "pause": "Pause",
