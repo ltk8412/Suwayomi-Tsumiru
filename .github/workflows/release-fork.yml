@@ -19,9 +19,6 @@
 name: Release (fork)
 
 on:
-  # TEMPORARY: kept for one android-only verification run; remove afterwards so
-  # only v tags trigger builds.
-  workflow_dispatch:
   push:
     tags:
       - "v*.*.*"
