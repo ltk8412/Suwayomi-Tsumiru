@@ -1,14 +1,12 @@
-# Multi-platform release builder for Aaron's fork.
+# Android release builder for this fork.
 #
-# Triggered by pushing a v*.*.* tag (or manually). Builds Android, iOS, Linux,
-# Windows, macOS and Web from the tagged commit and attaches the artifacts to
-# the GitHub release. Distinct from the inherited upstream `publish.yml`
-# (which targets winget/homebrew/Play Store and uses unpinned Flutter).
+# Triggered by pushing a v*.*.* tag. Builds the Android APKs from the tagged
+# commit and attaches them to the GitHub release.
 #
-# Release stays a DRAFT until complete: every platform attaches its artifact to
-# a draft release, and the separate `publish` job flips it to published only
-# after all six builds succeed. A failed platform leaves the release a draft.
-# So the release is never public with missing artifacts.
+# Release stays a DRAFT until complete: the build attaches its artifacts to a
+# draft release, and the separate `publish` job flips it to published only
+# after the build succeeds, so the release is never public with missing
+# artifacts.
 #
 # Maintainer flow for a release (e.g. v0.7.2):
 #   1. gh release create v0.7.2 --target <sha> --notes-file notes.md --draft
@@ -18,19 +16,12 @@
 # Android release APKs are signed with the project's single release key,
 # the same one used by local release builds; the post-build verification
 # step pins the expected signer certificate.
-#
-# iOS is built UNSIGNED (no Apple Developer account needed). The resulting
-# .ipa is not installable directly — users re-sign it themselves via AltStore /
-# SideStore / TrollStore. See the release notes / docs install section.
 name: Release (fork)
 
 on:
+  # TEMPORARY: kept for one android-only verification run; remove afterwards so
+  # only v tags trigger builds.
   workflow_dispatch:
-  # Weekly all-platform dry run: catches iOS/macOS breakage before release day
-  # (the PR check builds a single platform). Without a tag ref, the
-  # release-attach and publish steps are skipped, so nothing is published.
-  schedule:
-    - cron: '0 6 * * 1'
   push:
     tags:
       - "v*.*.*"
@@ -50,19 +41,6 @@ jobs:
         include:
           - os: ubuntu-latest
             target: android
-          - os: ubuntu-latest
-            target: linux
-          - os: ubuntu-latest
-            target: web
-          - os: macos-latest
-            target: macos
-          - os: macos-latest
-            target: ios
-          # Pinned to 2022: windows-latest (Server 2025) ships VS 2022 in a
-          # layout Flutter 3.32.4 fails to detect, so CMake falls back to the
-          # "Visual Studio 16 2019" generator and can't find an instance.
-          - os: windows-2022
-            target: windows
 
     steps:
       - uses: actions/checkout@v7
@@ -98,24 +76,6 @@ jobs:
           # NoSuchMethodError while analysing plugin sources.
           java-version: "21"
 
-      - name: Install Linux build deps
-        if: matrix.target == 'linux'
-        # Bounded retries/timeouts so a flaky Azure apt mirror can't hang the
-        # job for 20+ minutes (it did on the first run).
-        run: |
-          opts="-o Acquire::Retries=3 -o Acquire::http::Timeout=25 -o Acquire::https::Timeout=25"
-          sudo apt-get $opts update
-          sudo apt-get $opts install -y --no-install-recommends \
-            clang cmake ninja-build pkg-config \
-            libgtk-3-dev libx11-dev libblkid-dev liblzma-dev \
-            libsecret-1-dev libjsoncpp-dev libavif-dev
-          # libsecret + jsoncpp are required by flutter_secure_storage_linux
-          # (used by the simple_login / ui_login credential store).
-
-      - name: Enable desktop targets
-        if: matrix.target == 'linux' || matrix.target == 'macos' || matrix.target == 'windows'
-        run: flutter config --enable-linux-desktop --enable-macos-desktop --enable-windows-desktop
-
       - run: flutter pub get
       - run: flutter gen-l10n
       - run: dart run build_runner build --delete-conflicting-outputs
@@ -133,8 +93,7 @@ jobs:
           } > key.properties
 
       # Patch the empty MAL client-id default with the repo secret before any
-      # build so every platform (incl. fastforge/flatpak, which call flutter
-      # build internally) compiles it in — no per-tool --dart-define needed.
+      # build so it is compiled in — no per-tool --dart-define needed.
       - name: Inject MyAnimeList client id
         # -i.bak (no space) is the one in-place form GNU and BSD sed agree on;
         # bare -i breaks macOS/iOS runners.
@@ -168,25 +127,25 @@ jobs:
             build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
             build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk \
             build/app/outputs/flutter-apk/app-x86_64-release.apk; do
-            digest=$("$APKSIGNER" verify --print-certs "$apk" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p')
+            # Capture both streams and print the raw output: apksigner builds
+            # differ in where the certificate lines land and how they are
+            # labelled, and a silent parse miss reads like a wrong key.
+            output=$("$APKSIGNER" verify --print-certs "$apk" 2>&1) || true
+            echo "--- apksigner output for $apk ---"
+            echo "$output"
+            digest=$(printf '%s\n' "$output" | sed -n \
+              -e 's/^Signer #1 certificate SHA-256 digest: *//p' \
+              -e 's/^V[0-9.]* *Signer: *certificate SHA-256 digest: *//p' | head -n 1)
+            if [ -z "$digest" ]; then
+              digest=$(printf '%s\n' "$output" | grep -oiE '\b[0-9a-f]{64}\b' | head -n 1)
+            fi
+            digest=$(printf '%s' "$digest" | tr 'A-F' 'a-f' | tr -d ' :\r')
             if [ "$digest" != "$EXPECTED_CERT_SHA256" ]; then
               echo "::error::$apk is signed with ${digest:-<no certificate>} but expected $EXPECTED_CERT_SHA256. Is the KEYSTORE_BASE64 secret the project release keystore?"
               exit 1
             fi
             echo "PASS: $apk signed with $digest"
           done
-
-      - name: Build ${{ matrix.target }}
-        # Linux is built by fastforge in the AppImage step below (and by the Flatpak workflow).
-        # iOS needs --no-codesign, handled in its own step below.
-        if: matrix.target != 'android' && matrix.target != 'linux' && matrix.target != 'ios'
-        run: flutter build ${{ matrix.target }} --release
-
-      - name: Build iOS (unsigned)
-        if: matrix.target == 'ios'
-        # No Apple Developer account / signing certs in CI — build an unsigned
-        # binary. Flutter runs `pod install` automatically as part of this.
-        run: flutter build ios --release --no-codesign
 
       # ---- package into dist/ ----
       - name: Package Android
@@ -197,140 +156,6 @@ jobs:
           cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk  "dist/${pkg_name}-${{ github.ref_name }}-android-arm64-v8a.apk"
           cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk "dist/${pkg_name}-${{ github.ref_name }}-android-armeabi-v7a.apk"
           cp build/app/outputs/flutter-apk/app-x86_64-release.apk     "dist/${pkg_name}-${{ github.ref_name }}-android-x86_64.apk"
-
-      - name: Build Linux AppImage
-        if: matrix.target == 'linux'
-        env:
-          # appimagetool is itself an AppImage; extract-and-run avoids needing FUSE on CI.
-          APPIMAGE_EXTRACT_AND_RUN: "1"
-          TSUMIRU_BUNDLE_AVIF_DEPS: "1"
-        run: |
-          # Official appimagetool, pinned (fastforge shells out to it).
-          sudo wget -q https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage -O /usr/local/bin/appimagetool
-          echo "ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0  /usr/local/bin/appimagetool" | sha256sum -c -
-          sudo chmod +x /usr/local/bin/appimagetool
-          # fastforge's AppImage maker may call `locate` for include resolution.
-          sudo apt-get install -y --no-install-recommends plocate zsync && sudo updatedb || true
-          dart pub global activate fastforge
-          export PATH="$PATH:$HOME/.pub-cache/bin"
-          # Builds `flutter build linux --release` + packages an AppImage.
-          fastforge package --platform linux --targets appimage
-          # Guard: the SQLite native lib must be bundled, or the app crashes on
-          # DB open (the error-126 class we shipped on Windows in 0.9.0/0.9.1).
-          sqlite="$(find build/linux -iname 'libsqlite3*.so' | head -1)"
-          if [ -z "$sqlite" ]; then
-            echo "::error::sqlite3 native library missing from the Linux build"
-            find build/linux -iname '*.so' 2>/dev/null | head; exit 1
-          fi
-          echo "Bundled SQLite: $sqlite"
-          avif_shim="$(find build/linux -name 'libtsumiru_avif.so' | head -1)"
-          if [ -z "$avif_shim" ]; then
-            echo "::error::libtsumiru_avif.so missing from the Linux build"
-            find build/linux -iname '*.so' 2>/dev/null | head; exit 1
-          fi
-          avif_lib="$(find build/linux -name 'libavif.so.*' | head -1)"
-          if [ -z "$avif_lib" ]; then
-            echo "::error::libavif runtime closure missing from the Linux build"
-            find build/linux -iname '*.so' 2>/dev/null | head; exit 1
-          fi
-          echo "Bundled AVIF: $avif_shim + $avif_lib"
-          # Collect the AppImage into dist/ with our release naming.
-          mkdir -p dist
-          built="$(find dist -name '*.AppImage' | head -1)"
-          mv "$built" "dist/${pkg_name}-${{ github.ref_name }}-linux-x86_64.AppImage"
-          # Drop fastforge's version subdir so the release only attaches our named files.
-          find dist -mindepth 1 -type d -exec rm -rf {} + 2>/dev/null || true
-          # fastforge embeds no update info, so repack for delta updates.
-          mv "dist/${pkg_name}-${{ github.ref_name }}-linux-x86_64.AppImage" ./fastforge-input.AppImage
-          ./fastforge-input.AppImage --appimage-extract > /dev/null
-          chmod -R a+rX squashfs-root
-          chmod a+rx squashfs-root/AppRun
-          appimagetool -u "gh-releases-zsync|Suwayomi|Suwayomi-Tsumiru|latest|tsumiru-*-linux-x86_64.AppImage.zsync" \
-            squashfs-root "dist/${pkg_name}-${{ github.ref_name }}-linux-x86_64.AppImage"
-          mv ./"${pkg_name}-${{ github.ref_name }}-linux-x86_64.AppImage.zsync" dist/
-          rm -rf squashfs-root fastforge-input.AppImage
-
-      - name: Package Web
-        if: matrix.target == 'web'
-        working-directory: build/web
-        run: |
-          mkdir -p "$GITHUB_WORKSPACE/dist"
-          zip -r "$GITHUB_WORKSPACE/dist/${pkg_name}-${{ github.ref_name }}-web.zip" *
-          printf '%s' '${{ github.ref_name }}' > revision
-          python3 "$GITHUB_WORKSPACE/.github/scripts/web_tree_md5.py" . > "$GITHUB_WORKSPACE/dist/md5sum"
-          zip -r "$GITHUB_WORKSPACE/dist/${pkg_name}-web-${{ github.ref_name }}.zip" .
-
-      - name: Package macOS
-        if: matrix.target == 'macos'
-        shell: bash
-        run: |
-          mkdir -p dist
-          APP=$(find build/macos/Build/Products/Release -maxdepth 1 -name "*.app" | head -1)
-          # Guard: the SQLite native lib must be bundled inside the app. On macOS
-          # it ships as a code-asset framework (sqlite3.framework), not a loose
-          # dylib. Absence is the error-126 DB-open crash we shipped on Windows
-          # in 0.9.0/0.9.1.
-          sqlite=$(find "$APP" \( -iname '*sqlite3*.dylib' -o -iname 'sqlite3*.framework' \))
-          if [ -z "$sqlite" ]; then
-            echo "::error::sqlite3 native library missing from the macOS bundle"
-            find "$APP/Contents/Frameworks" -maxdepth 1 2>/dev/null; exit 1
-          fi
-          echo "Bundled SQLite: $sqlite"
-          check_archs() {
-            local binary="$1" archs
-            if ! archs=$(lipo -archs "$binary"); then
-              echo "::error::Cannot read architectures of $binary: $archs"
-              exit 1
-            fi
-            case " $archs " in
-              *" x86_64 "*) ;;
-              *) echo "::error::$binary has architectures: $archs (requires x86_64 and arm64)"; exit 1 ;;
-            esac
-            case " $archs " in
-              *" arm64 "*) ;;
-              *) echo "::error::$binary has architectures: $archs (requires x86_64 and arm64)"; exit 1 ;;
-            esac
-          }
-          executable=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP/Contents/Info.plist")
-          check_archs "$APP/Contents/MacOS/$executable"
-          while IFS= read -r -d '' binary; do
-            if file -b "$binary" | grep -q 'Mach-O'; then
-              check_archs "$binary"
-            fi
-          done < <(find "$APP/Contents/Frameworks" -type f -print0)
-          ditto -c -k --sequesterRsrc --keepParent "$APP" "dist/${pkg_name}-${{ github.ref_name }}-macos-universal.zip"
-
-      - name: Package iOS (unsigned IPA)
-        if: matrix.target == 'ios'
-        # An .ipa is just a zip with the .app inside a top-level Payload/ dir.
-        run: |
-          mkdir -p dist Payload
-          APP=$(find build/ios/iphoneos -maxdepth 1 -name "*.app" | head -1)
-          cp -R "$APP" Payload/
-          zip -r -y "dist/${pkg_name}-${{ github.ref_name }}-ios.ipa" Payload
-          rm -rf Payload
-
-      - name: Package Windows
-        if: matrix.target == 'windows'
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path dist | Out-Null
-          # Bundle the MSVC runtime DLLs (msvcp140 / vcruntime140 / *_1) next to
-          # the exe, so the app runs on machines WITHOUT the Visual C++
-          # Redistributable installed. Without these the window opens but never
-          # paints — a blank white screen — on otherwise-fine PCs.
-          $redist = vswhere -latest -find 'VC\Redist\MSVC\*\x64\*\*.dll'
-          Copy-Item $redist build\windows\x64\runner\Release\ -Force
-          # Guard: the SQLite native library must be bundled next to the exe.
-          # Its absence was the error-126 DB-open crash in 0.9.0/0.9.1.
-          $sqlite = Get-ChildItem build\windows\x64\runner\Release\ -Filter *.dll |
-            Where-Object { $_.Name -match 'sqlite3' }
-          if (-not $sqlite) {
-            Get-ChildItem build\windows\x64\runner\Release\ | Select-Object Name
-            throw "sqlite3 native library missing from the Windows bundle"
-          }
-          Write-Host "Bundled SQLite: $($sqlite.Name)"
-          Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath "dist\${env:pkg_name}-${{ github.ref_name }}-windows-x64.zip"
 
       - name: Attach to the draft release
         if: startsWith(github.ref, 'refs/tags/')
@@ -350,7 +175,7 @@ jobs:
 
   publish:
     name: Publish the release
-    # Runs only after EVERY matrix build job succeeds. If any platform fails,
+    # Runs only after the Android build job succeeds. If the build fails,
     # this job is skipped and the release stays a draft for the maintainer to
     # fix and re-run, so an incomplete release is never made public.
     needs: build
@@ -359,7 +184,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Publish now that all six platforms have attached
+      - name: Publish now that the Android build has attached
         id: publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

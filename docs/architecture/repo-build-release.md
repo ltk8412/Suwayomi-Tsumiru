@@ -12,7 +12,7 @@ Tsumiru is its **own application** published at `Suwayomi/Suwayomi-Tsumiru` insi
 | `upstream` | `github.com/Suwayomi/Tachidesk-Sorayomi` | Optional remote for the project Tsumiru descends from (attribution / occasional sync) |
 | `ariqpradipa` | `github.com/ariqpradipa/Tachidesk-Sorayomi` | Optional remote for the author of adopted reader PR #362 |
 
-**Workflow:** Tsumiru uses **pull requests** (public project). Branch off `main`, open a PR, let CI gate it, then merge. Branch and commit names are plain/human — no `feat/`-style prefixes. Push/PR-create/merge happen on `origin`.
+**Workflow:** Tsumiru uses **pull requests** (public project). Branch off `main`, open a PR, review it manually, then merge — there are no PR checks, so build and test locally first. Branch and commit names are plain/human — no `feat/`-style prefixes. Push/PR-create/merge happen on `origin`.
 
 ## Version scheme
 
@@ -23,30 +23,17 @@ Tsumiru is its **own application** published at `Suwayomi/Suwayomi-Tsumiru` insi
 
 ## Release flow
 
-A release is **maintainer-initiated as a draft, then auto-published once every platform builds:**
+A release is **maintainer-initiated as a draft, then auto-published once the build succeeds:**
 
 1. `gh release create vX.Y.Z --target <sha> --notes-file notes.md --draft` — create the draft with its notes.
-2. `git tag vX.Y.Z <sha> && git push origin vX.Y.Z` — the tag push fires two workflows in parallel.
+2. `git tag vX.Y.Z <sha> && git push origin vX.Y.Z` — the tag push fires the release workflow.
 
-**`release-fork.yml`** (primary release builder) — Flutter read from `.fvmrc` (currently 3.44.6). A **6-job** build matrix (`fail-fast: false`):
+**`release-fork.yml`** (primary release builder) — Flutter read from `.fvmrc` (currently 3.47.9). A single **android** build job on `ubuntu-latest` produces 4 APKs (universal + arm64-v8a + armeabi-v7a + x86_64), signed with the shared release key via repo secrets.
 
-| Job | Runner | Output |
-|---|---|---|
-| android | ubuntu-latest | 4 APKs (universal + arm64-v8a + armeabi-v7a + x86_64), signed with the shared release key via repo secrets |
-| linux | ubuntu-latest | AppImage + `.zsync` (fastforge, then repacked by appimagetool with `gh-releases-zsync` update info) |
-| web | ubuntu-latest | `*-web.zip` |
-| macos | macos-latest | `.app` zip |
-| ios | macos-latest | **unsigned** `.ipa` (no Apple Developer account; users re-sign via AltStore / SideStore / TrollStore) |
-| windows | **windows-2022** (pinned, not `latest`) | `*-windows-x64.zip` |
-
-- Each platform attaches its artifact to the **draft** release (guarded by `startsWith(github.ref, 'refs/tags/')`). A separate **`publish`** job flips the draft to published (`--latest`) only after all six builds succeed — and refuses to publish if the release notes are empty, so an incomplete or blank release never goes public. A failed platform leaves the release a draft. On publish it best-effort triggers a `tsumiru.app` rebuild so the new release shows immediately.
-- **Weekly dry run:** a Monday 06:00 UTC cron builds all platforms with no tag ref — it catches iOS/macOS breakage before release day (the PR check builds only a single platform) and, without a tag, skips the attach + publish steps entirely.
+- The build attaches its artifacts to the **draft** release (guarded by `startsWith(github.ref, 'refs/tags/')`). A separate **`publish`** job flips the draft to published (`--latest`) only after the build succeeds — and refuses to publish if the release notes are empty, so an incomplete or blank release never goes public. A failed build leaves the release a draft. On publish it best-effort triggers a `tsumiru.app` rebuild so the new release shows immediately.
 - Android signing secrets: `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`.
-- Linux build deps: `clang cmake ninja-build pkg-config libgtk-3-dev libx11-dev libblkid-dev liblzma-dev libsecret-1-dev libjsoncpp-dev libavif-dev` (libsecret + jsoncpp needed for `flutter_secure_storage_linux`; libavif-dev provides the `tsumiru_avif` shim's build and link dependencies).
 
-**Linux AVIF decoder shim** (`linux/tsumiru_avif.{cc,h}` → `bundle/lib/libtsumiru_avif.so`): app-owned shared library built against the system libavif (`pkg-config libavif`) and loaded by the Dart worker. Decodes the first frame only, applies clap/irot/imir, encodes PNG with GdkPixbuf. Bounds: 64 MP, 131072 px per side, `maxThreads<=2`. Linux archives and AppImages bundle libavif; Flatpak uses the runtime copy. Bundled deps sit next to the shim (RPATH `$ORIGIN`, glibc/GTK stack excluded); Flatpak sets `TSUMIRU_BUNDLE_AVIF_DEPS=0`.
-
-**`flatpak.yml`** (self-hosted Flatpak repo → GitHub Pages) — three sequential jobs: build a Linux bundle for each app ID, package + GPG-sign in the `freedesktop:25.08` flatter container, deploy to Pages at `flatpak.tsumiru.app` (the app repo's own Pages behind Cloudflare, so update checks are countable; the old `suwayomi.github.io/Suwayomi-Tsumiru` URLs 301 there, so existing remotes keep working uncounted-then-counted through the redirect; the docs site lives at `tsumiru.app`, served from `tsumiru-app/tsumiru-app.github.io` behind Cloudflare). Needs secrets `FLATPAK_GPG_PRIVATE_KEY` + `FLATPAK_GPG_KEY_ID`. Both `app.tsumiru.Tsumiru` (new Flatpak installs) and `io.github.aaronbamblett.tsumiru` (existing Flatpak installs) are published forever to the same repo and branch with the same GPG key, with release entries and flatpakrefs for both. Linux builds default to the legacy ID, preserving AppImage/deb data paths; only the new-ID Flatpak bundle sets `TSUMIRU_APPLICATION_ID=app.tsumiru.Tsumiru`, and no data, settings or logins are migrated.
+**Linux AVIF decoder shim** (`linux/tsumiru_avif.{cc,h}` → `bundle/lib/libtsumiru_avif.so`): app-owned shared library built against the system libavif (`pkg-config libavif`) and loaded by the Dart worker. Decodes the first frame only, applies clap/irot/imir, encodes PNG with GdkPixbuf. Bounds: 64 MP, 131072 px per side, `maxThreads<=2`.
 
 ### Android release signing
 
@@ -73,15 +60,9 @@ size during window resizing, causing a null texture dereference in
 override after the pinned Flutter version includes the fix and repeated window
 resizing passes on macOS. Other platforms retain their renderer defaults.
 
-## CI quality gates
-
-**`flathub-check.yml`** regenerates the Flathub manifest for the tested commit, builds offline in the Freedesktop 26.08 sandbox, lints the manifest and repository, and uploads `flathub-manifest` on relevant PRs, release tags and manual runs.
-
-**`pr-checks.yml`** runs on every PR to `main`: `flutter pub get → flutter gen-l10n → build_runner build → flutter analyze → flutter test`. Analyze runs with `--no-fatal-warnings --no-fatal-infos`, so only real errors (or a failing test) block the merge — the repo's inherited warnings/infos are reported but don't gate. This is the safety net that keeps a broken build from merging.
-
 ## Automated dependency updates (Renovate)
 
-**`renovate.yml`** runs self-hosted Renovate weekly (Mondays 06:00 UTC) and on demand, opening small, CI-gated PRs to keep dependencies current. It authenticates with a fine-grained PAT in the `RENOVATE_TOKEN` secret — not the default `GITHUB_TOKEN`, whose PRs wouldn't trigger `pr-checks.yml`. Config lives in `renovate.json` + `.github/renovate-global.js`. This is the mechanism that cleared the dependency backlog and drove the Riverpod 3 / freezed 3 / graphql_codegen 3 / go_router 17 migration.
+**`renovate.yml`** runs self-hosted Renovate weekly (Mondays 06:00 UTC) and on demand, opening small PRs to keep dependencies current. It authenticates with a fine-grained PAT in the `RENOVATE_TOKEN` secret — not the default `GITHUB_TOKEN`. Config lives in `renovate.json` + `.github/renovate-global.js`. There are no PR checks, so review these PRs manually. This is the mechanism that cleared the dependency backlog and drove the Riverpod 3 / freezed 3 / graphql_codegen 3 / go_router 17 migration.
 
 ## Codegen — what regenerates and when
 
