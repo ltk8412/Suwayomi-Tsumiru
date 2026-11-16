@@ -42,24 +42,25 @@ class InfinityContinuousFeedback {
             Icon(
               FluentIcons.book_open_24_regular,
               size: 18,
-              color: context.theme.colorScheme.onInverseSurface,
+              color: Colors.black,
             ),
             const Gap(12),
             Expanded(
               child: Text(
                 context.l10n.noMoreChaptersAhead,
-                style: TextStyle(
-                  color: context.theme.colorScheme.onInverseSurface,
-                ),
+                style: TextStyle(color: Colors.black),
               ),
             ),
           ],
         ),
-        backgroundColor: context.theme.colorScheme.inverseSurface,
+        backgroundColor: Colors.white,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.only(left: 16, right: 16, bottom: 80),
         duration: const Duration(seconds: 2),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: Colors.black, width: 1.5),
+        ),
       ),
       snackBarAnimationStyle: context.snackBarMotionStyle,
     );
@@ -86,24 +87,25 @@ class InfinityContinuousFeedback {
             Icon(
               FluentIcons.arrow_previous_24_regular,
               size: 18,
-              color: context.theme.colorScheme.onInverseSurface,
+              color: Colors.black,
             ),
             const Gap(12),
             Expanded(
               child: Text(
                 context.l10n.noMoreChaptersBehind,
-                style: TextStyle(
-                  color: context.theme.colorScheme.onInverseSurface,
-                ),
+                style: TextStyle(color: Colors.black),
               ),
             ),
           ],
         ),
-        backgroundColor: context.theme.colorScheme.inverseSurface,
+        backgroundColor: Colors.white,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.only(left: 16, right: 16, bottom: 80),
         duration: const Duration(seconds: 2),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: Colors.black, width: 1.5),
+        ),
       ),
       snackBarAnimationStyle: context.snackBarMotionStyle,
     );
@@ -120,27 +122,25 @@ class InfinityContinuousFeedback {
             SizedBox(
               width: 18,
               height: 18,
-              child: AppCircularProgress(
-                strokeWidth: 2,
-                color: context.theme.colorScheme.onInverseSurface,
-              ),
+              child: AppCircularProgress(strokeWidth: 2, color: Colors.black),
             ),
             const Gap(12),
             Expanded(
               child: Text(
                 context.l10n.loadingNextChapter,
-                style: TextStyle(
-                  color: context.theme.colorScheme.onInverseSurface,
-                ),
+                style: TextStyle(color: Colors.black),
               ),
             ),
           ],
         ),
-        backgroundColor: context.theme.colorScheme.inverseSurface,
+        backgroundColor: Colors.white,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.only(left: 16, right: 16, bottom: 80),
         duration: const Duration(seconds: 1),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: Colors.black, width: 1.5),
+        ),
       ),
       snackBarAnimationStyle: context.snackBarMotionStyle,
     );
@@ -157,27 +157,25 @@ class InfinityContinuousFeedback {
             SizedBox(
               width: 18,
               height: 18,
-              child: AppCircularProgress(
-                strokeWidth: 2,
-                color: context.theme.colorScheme.onInverseSurface,
-              ),
+              child: AppCircularProgress(strokeWidth: 2, color: Colors.black),
             ),
             const Gap(12),
             Expanded(
               child: Text(
                 context.l10n.loadingPreviousChapter,
-                style: TextStyle(
-                  color: context.theme.colorScheme.onInverseSurface,
-                ),
+                style: TextStyle(color: Colors.black),
               ),
             ),
           ],
         ),
-        backgroundColor: context.theme.colorScheme.inverseSurface,
+        backgroundColor: Colors.white,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.only(left: 16, right: 16, bottom: 80),
         duration: const Duration(seconds: 1),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: Colors.black, width: 1.5),
+        ),
       ),
       snackBarAnimationStyle: context.snackBarMotionStyle,
     );
@@ -193,26 +191,27 @@ class InfinityContinuousFeedback {
           children: [
             Icon(
               FluentIcons.checkmark_circle_24_regular,
-              color: context.theme.colorScheme.onInverseSurface,
+              color: Colors.black,
               size: 18,
             ),
             const Gap(12),
             Expanded(
               child: Text(
                 context.l10n.nextChapterLoaded(chapterName),
-                style: TextStyle(
-                  color: context.theme.colorScheme.onInverseSurface,
-                ),
+                style: TextStyle(color: Colors.black),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
         ),
-        backgroundColor: context.theme.colorScheme.inverseSurface,
+        backgroundColor: Colors.white,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.only(left: 16, right: 16, bottom: 80),
         duration: const Duration(milliseconds: 1500),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: Colors.black, width: 1.5),
+        ),
       ),
       snackBarAnimationStyle: context.snackBarMotionStyle,
     );
@@ -228,26 +227,27 @@ class InfinityContinuousFeedback {
           children: [
             Icon(
               FluentIcons.checkmark_circle_24_regular,
-              color: context.theme.colorScheme.onInverseSurface,
+              color: Colors.black,
               size: 18,
             ),
             const Gap(12),
             Expanded(
               child: Text(
                 context.l10n.previousChapterLoaded(chapterName),
-                style: TextStyle(
-                  color: context.theme.colorScheme.onInverseSurface,
-                ),
+                style: TextStyle(color: Colors.black),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
         ),
-        backgroundColor: context.theme.colorScheme.inverseSurface,
+        backgroundColor: Colors.white,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.only(left: 16, right: 16, bottom: 80),
         duration: const Duration(milliseconds: 1500),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: Colors.black, width: 1.5),
+        ),
       ),
       snackBarAnimationStyle: context.snackBarMotionStyle,
     );
@@ -264,7 +264,7 @@ class InfinityContinuousFeedback {
           children: [
             Icon(
               FluentIcons.error_circle_24_regular,
-              color: context.theme.colorScheme.onErrorContainer,
+              color: context.theme.colorScheme.error,
               size: 18,
             ),
             const Gap(12),
@@ -273,18 +273,19 @@ class InfinityContinuousFeedback {
                 isNext
                     ? context.l10n.failedToLoadNextChapter
                     : context.l10n.failedToLoadPreviousChapter,
-                style: TextStyle(
-                  color: context.theme.colorScheme.onErrorContainer,
-                ),
+                style: TextStyle(color: Colors.black),
               ),
             ),
           ],
         ),
-        backgroundColor: context.theme.colorScheme.errorContainer,
+        backgroundColor: Colors.white,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.only(left: 16, right: 16, bottom: 80),
         duration: const Duration(seconds: 3),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: Colors.black, width: 1.5),
+        ),
       ),
       snackBarAnimationStyle: context.snackBarMotionStyle,
     );
