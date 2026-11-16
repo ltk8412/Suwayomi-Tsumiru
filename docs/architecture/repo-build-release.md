@@ -12,7 +12,7 @@ Tsumiru is its **own application** published at `Suwayomi/Suwayomi-Tsumiru` insi
 | `upstream` | `github.com/Suwayomi/Tachidesk-Sorayomi` | Optional remote for the project Tsumiru descends from (attribution / occasional sync) |
 | `ariqpradipa` | `github.com/ariqpradipa/Tachidesk-Sorayomi` | Optional remote for the author of adopted reader PR #362 |
 
-**Workflow:** Tsumiru uses **pull requests** (public project). Branch off `main`, open a PR, review it manually, then merge — there are no PR checks, so build and test locally first. Branch and commit names are plain/human — no `feat/`-style prefixes. Push/PR-create/merge happen on `origin`.
+**Workflow:** Tsumiru uses **pull requests** (public project). Branch off `main`, open a PR, let CI gate it, then merge. Branch and commit names are plain/human — no `feat/`-style prefixes. Push/PR-create/merge happen on `origin`.
 
 ## Version scheme
 
@@ -60,9 +60,13 @@ size during window resizing, causing a null texture dereference in
 override after the pinned Flutter version includes the fix and repeated window
 resizing passes on macOS. Other platforms retain their renderer defaults.
 
+## CI quality gates
+
+**`pr-checks.yml`** runs on every PR to `main`: `flutter pub get → flutter gen-l10n → build_runner build → flutter analyze → flutter test`, plus a separate job that does a real Android Gradle compile (analyze/test alone let an AGP bump break Android builds unnoticed). Analyze runs with `--no-fatal-warnings --no-fatal-infos`, so only real errors (or a failing test) block the merge — the repo's inherited warnings/infos are reported but don't gate. This is the safety net that keeps a broken build from merging.
+
 ## Automated dependency updates (Renovate)
 
-**`renovate.yml`** runs self-hosted Renovate weekly (Mondays 06:00 UTC) and on demand, opening small PRs to keep dependencies current. It authenticates with a fine-grained PAT in the `RENOVATE_TOKEN` secret — not the default `GITHUB_TOKEN`. Config lives in `renovate.json` + `.github/renovate-global.js`. There are no PR checks, so review these PRs manually. This is the mechanism that cleared the dependency backlog and drove the Riverpod 3 / freezed 3 / graphql_codegen 3 / go_router 17 migration.
+**`renovate.yml`** runs self-hosted Renovate weekly (Mondays 06:00 UTC) and on demand, opening small, CI-gated PRs to keep dependencies current. It authenticates with a fine-grained PAT in the `RENOVATE_TOKEN` secret — not the default `GITHUB_TOKEN`, whose PRs wouldn't trigger `pr-checks.yml`. Config lives in `renovate.json` + `.github/renovate-global.js`. This is the mechanism that cleared the dependency backlog and drove the Riverpod 3 / freezed 3 / graphql_codegen 3 / go_router 17 migration.
 
 ## Codegen — what regenerates and when
 
