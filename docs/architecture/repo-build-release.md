@@ -32,7 +32,7 @@ A release is **maintainer-initiated as a draft, then auto-published once every p
 
 | Job | Runner | Output |
 |---|---|---|
-| android | ubuntu-latest | 4 APKs (universal + arm64-v8a + armeabi-v7a + x86_64), debug-keystore signed via repo secrets so upgrades stay clean |
+| android | ubuntu-latest | 4 APKs (universal + arm64-v8a + armeabi-v7a + x86_64), signed with the shared release key via repo secrets |
 | linux | ubuntu-latest | AppImage + `.zsync` (fastforge, then repacked by appimagetool with `gh-releases-zsync` update info) |
 | web | ubuntu-latest | `*-web.zip` |
 | macos | macos-latest | `.app` zip |
@@ -47,6 +47,20 @@ A release is **maintainer-initiated as a draft, then auto-published once every p
 **Linux AVIF decoder shim** (`linux/tsumiru_avif.{cc,h}` → `bundle/lib/libtsumiru_avif.so`): app-owned shared library built against the system libavif (`pkg-config libavif`) and loaded by the Dart worker. Decodes the first frame only, applies clap/irot/imir, encodes PNG with GdkPixbuf. Bounds: 64 MP, 131072 px per side, `maxThreads<=2`. Linux archives and AppImages bundle libavif; Flatpak uses the runtime copy. Bundled deps sit next to the shim (RPATH `$ORIGIN`, glibc/GTK stack excluded); Flatpak sets `TSUMIRU_BUNDLE_AVIF_DEPS=0`.
 
 **`flatpak.yml`** (self-hosted Flatpak repo → GitHub Pages) — three sequential jobs: build a Linux bundle for each app ID, package + GPG-sign in the `freedesktop:25.08` flatter container, deploy to Pages at `flatpak.tsumiru.app` (the app repo's own Pages behind Cloudflare, so update checks are countable; the old `suwayomi.github.io/Suwayomi-Tsumiru` URLs 301 there, so existing remotes keep working uncounted-then-counted through the redirect; the docs site lives at `tsumiru.app`, served from `tsumiru-app/tsumiru-app.github.io` behind Cloudflare). Needs secrets `FLATPAK_GPG_PRIVATE_KEY` + `FLATPAK_GPG_KEY_ID`. Both `app.tsumiru.Tsumiru` (new Flatpak installs) and `io.github.aaronbamblett.tsumiru` (existing Flatpak installs) are published forever to the same repo and branch with the same GPG key, with release entries and flatpakrefs for both. Linux builds default to the legacy ID, preserving AppImage/deb data paths; only the new-ID Flatpak bundle sets `TSUMIRU_APPLICATION_ID=app.tsumiru.Tsumiru`, and no data, settings or logins are migrated.
+
+### Android release signing
+
+Android release APKs are signed with **one shared release key** — there is no key rotation in the pipeline. Locally the keystore is `android/app/tsumiru-release.jks` (alias `tsumiru`, not committed to git), wired up through `android/key.properties` (`storeFile` / `keyAlias` / `storePassword` / `keyPassword`); Gradle's release `signingConfig` reads that file, so local release builds pick the key up automatically.
+
+CI consumes the **same** keystore from GitHub Actions secrets: `release-fork.yml` decodes `KEYSTORE_BASE64` (base64 of the `.jks`) into place and writes the identical `key.properties` layout before building, filling in `KEY_ALIAS=tsumiru` plus the `KEYSTORE_PASSWORD` / `KEY_PASSWORD` values from `android/key.properties`. To (re)create the secrets:
+
+- `KEYSTORE_BASE64` — `base64 -w0 android/app/tsumiru-release.jks`
+- `KEY_ALIAS` — `tsumiru`
+- `KEYSTORE_PASSWORD` / `KEY_PASSWORD` — the matching values from `android/key.properties`
+
+After building, the workflow verifies every APK's signer certificate SHA-256 equals `5063a9b520c33344b83b1b4281dbcc13bd6bf39092e3ebeb48b0b4a24fca4b17` and fails the build otherwise.
+
+**Fresh-key caveat:** the key is fresh, so installs signed with the previously published (upstream) Tsumiru keys cannot upgrade in place — users switching must uninstall and reinstall. Dev builds (`ORG_GRADLE_PROJECT_devBuild=1 flutter build apk --debug`) use the standard Android debug key and install as a separate app id.
 
 ## macOS renderer workaround
 

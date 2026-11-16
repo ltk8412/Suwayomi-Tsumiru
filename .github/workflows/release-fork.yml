@@ -15,8 +15,9 @@
 #   2. git tag v0.7.2 <sha> && git push origin v0.7.2   # triggers this build
 # The draft (with its notes) is filled in by the builds, then auto-published.
 #
-# Android uses the old signing key for Android 7–8 and the new key with
-# proof-of-rotation lineage for Android 9+ so existing installs can upgrade.
+# Android release APKs are signed with the project's single release key,
+# the same one used by local release builds; the post-build verification
+# step pins the expected signer certificate.
 #
 # iOS is built UNSIGNED (no Apple Developer account needed). The resulting
 # .ipa is not installable directly — users re-sign it themselves via AltStore /
@@ -151,31 +152,29 @@ jobs:
           # Same versionCode for every APK, so any APK installs over any older one.
           flutter build apk --release --split-per-abi -P force-version-code-ignoring-abi=true
 
-      - name: Rotate Android signing key
+      - name: Verify Android APK signing
         if: matrix.target == 'android'
         env:
-          OLD_KEYSTORE: ${{ github.workspace }}/android/app/release-keystore.jks
-          OLD_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          OLD_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          OLD_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-          NEW_KEYSTORE_BASE64: ${{ secrets.NEW_KEYSTORE_BASE64 }}
-          NEW_KEYSTORE: ${{ runner.temp }}/new-keystore.p12
-          NEW_KEYSTORE_PASSWORD: ${{ secrets.NEW_KEYSTORE_PASSWORD }}
-          NEW_KEY_ALIAS: ${{ secrets.NEW_KEY_ALIAS }}
-          NEW_KEY_PASSWORD: ${{ secrets.NEW_KEY_PASSWORD }}
-          SIGNING_LINEAGE_BASE64: ${{ secrets.SIGNING_LINEAGE_BASE64 }}
-          SIGNING_LINEAGE: ${{ runner.temp }}/signing.lineage
-          OLD_CERT_SHA256: 587e0570cce5eb153ecff7eb9a2cd54c9fd85ce72471fb0b99fa8c49e0c77a82
-          NEW_CERT_SHA256: d5f1244fdf0cf9181b7f063d908469857024221d8d31d8064850890c0814e61e
+          EXPECTED_CERT_SHA256: 5063a9b520c33344b83b1b4281dbcc13bd6bf39092e3ebeb48b0b4a24fca4b17
         run: |
-          umask 077
-          printf '%s' "$NEW_KEYSTORE_BASE64" | base64 --decode > "$NEW_KEYSTORE"
-          printf '%s' "$SIGNING_LINEAGE_BASE64" | base64 --decode > "$SIGNING_LINEAGE"
-          .github/scripts/sign-android-apks.sh \
+          if [ -n "${ANDROID_HOME:-}" ] && [ -d "$ANDROID_HOME/build-tools" ]; then
+            APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)
+          else
+            APKSIGNER=apksigner
+          fi
+          command -v "$APKSIGNER" >/dev/null || { echo "::error::apksigner not found"; exit 1; }
+          for apk in \
             build/app/outputs/flutter-apk/app-release.apk \
             build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
             build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk \
-            build/app/outputs/flutter-apk/app-x86_64-release.apk
+            build/app/outputs/flutter-apk/app-x86_64-release.apk; do
+            digest=$("$APKSIGNER" verify --print-certs "$apk" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p')
+            if [ "$digest" != "$EXPECTED_CERT_SHA256" ]; then
+              echo "::error::$apk is signed with ${digest:-<no certificate>} but expected $EXPECTED_CERT_SHA256. Is the KEYSTORE_BASE64 secret the project release keystore?"
+              exit 1
+            fi
+            echo "PASS: $apk signed with $digest"
+          done
 
       - name: Build ${{ matrix.target }}
         # Linux is built by fastforge in the AppImage step below (and by the Flatpak workflow).
