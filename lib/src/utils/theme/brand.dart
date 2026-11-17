@@ -105,6 +105,14 @@ abstract final class OnImage {
   static const scrim = Color(0xAA000000);
 }
 
+/// Toast popups (the toast widget and snack bars) stay black on white in
+/// every theme, so they keep a constant palette like [OnImage].
+abstract final class ToastColors {
+  static const surface = Colors.white;
+  static const onSurface = Colors.black;
+  static const border = Colors.black;
+}
+
 /// Shared reader chrome surface; high opacity preserves contrast over white pages.
 /// Fully opaque in the e-ink paper theme (translucency dithers on e-ink).
 Color readerNavSurface(BuildContext context) {

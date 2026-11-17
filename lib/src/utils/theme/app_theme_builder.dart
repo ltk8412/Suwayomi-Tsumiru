@@ -192,7 +192,7 @@ ThemeData buildAppTheme({required Brightness brightness}) {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(4),
-        side: const BorderSide(color: Colors.black, width: 1.5),
+        side: const BorderSide(color: ToastColors.border, width: 1.5),
       ),
     ),
     bottomSheetTheme: BottomSheetThemeData(
@@ -223,11 +223,11 @@ ThemeData buildAppTheme({required Brightness brightness}) {
   // Toast popups (snack bars) render black on white with a clear border in every theme.
   return theme.copyWith(
     snackBarTheme: theme.snackBarTheme.copyWith(
-      backgroundColor: Colors.white,
+      backgroundColor: ToastColors.surface,
       contentTextStyle: theme.textTheme.bodyMedium?.copyWith(
-        color: Colors.black,
+        color: ToastColors.onSurface,
       ),
-      actionTextColor: Colors.black,
+      actionTextColor: ToastColors.onSurface,
     ),
   );
 }
