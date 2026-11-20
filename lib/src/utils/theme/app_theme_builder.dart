@@ -50,7 +50,7 @@ ThemeData buildAppTheme({required Brightness brightness}) {
     ),
   );
 
-  return ThemeData(
+  final theme = ThemeData(
     useMaterial3: true,
     // Leave platform font fallback available for scripts Inter does not cover.
     fontFamily: 'Inter',
@@ -192,7 +192,7 @@ ThemeData buildAppTheme({required Brightness brightness}) {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(4),
-        side: BorderSide(color: scheme.onSurface),
+        side: const BorderSide(color: ToastColors.border, width: 1.5),
       ),
     ),
     bottomSheetTheme: BottomSheetThemeData(
@@ -217,6 +217,17 @@ ThemeData buildAppTheme({required Brightness brightness}) {
               : brightPrimary,
         ),
       ),
+    ),
+  );
+
+  // Toast popups (snack bars) render black on white with a clear border in every theme.
+  return theme.copyWith(
+    snackBarTheme: theme.snackBarTheme.copyWith(
+      backgroundColor: ToastColors.surface,
+      contentTextStyle: theme.textTheme.bodyMedium?.copyWith(
+        color: ToastColors.onSurface,
+      ),
+      actionTextColor: ToastColors.onSurface,
     ),
   );
 }

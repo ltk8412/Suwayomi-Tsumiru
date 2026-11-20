@@ -87,9 +87,7 @@ class Toast {
             close();
             onAction();
           },
-          style: TextButton.styleFrom(
-            foregroundColor: _context.colorScheme.primary,
-          ),
+          style: TextButton.styleFrom(foregroundColor: ToastColors.onSurface),
           child: Text(actionLabel),
         ),
       ),
@@ -180,17 +178,17 @@ class ToastWidget extends StatelessWidget {
         (isError ? Icon(Icons.error_outline, color: scheme.error) : null);
     Widget textWidget = Text(
       text,
-      style: context.textTheme.bodyMedium?.copyWith(color: scheme.onSurface),
+      style: context.textTheme.bodyMedium?.copyWith(
+        color: ToastColors.onSurface,
+      ),
       textAlign: action != null ? TextAlign.left : TextAlign.center,
     );
     final panel = Container(
       padding: KEdgeInsets.h16v8.size,
       decoration: BoxDecoration(
         borderRadius: KBorderRadius.r16.radius,
-        color: scheme.surfaceContainerHigh,
-        border: Border.all(
-          color: isError ? scheme.error : scheme.outlineVariant,
-        ),
+        color: ToastColors.surface,
+        border: Border.all(color: ToastColors.border, width: 1.5),
         // No panel shadow token in the theme; shadow role keeps it neutral in every theme.
         boxShadow: BrandColors.of(context).flat
             ? null
